@@ -35,6 +35,7 @@ public class StubExternalFlightGateway implements ExternalFlightGateway {
                 flight.getAirline().getName(),
                 flight.getAirline().getIataCode(),
                 flight.getAirline().getCountry(),
+                flight.getAirline().getWebsiteUrl(),
                 flight.getDepartureAirport(),
                 flight.getArrivalAirport(),
                 flight.getDepartureTime(),

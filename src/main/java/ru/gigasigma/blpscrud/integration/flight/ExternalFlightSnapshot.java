@@ -8,6 +8,7 @@ public record ExternalFlightSnapshot(
         String airlineName,
         String airlineIataCode,
         String airlineCountry,
+        String airlineWebsiteUrl,
         String departureAirport,
         String arrivalAirport,
         LocalDateTime departureTime,

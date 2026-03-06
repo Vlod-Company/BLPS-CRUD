@@ -1,0 +1,381 @@
+{
+  "info": {
+    "_postman_id": "f1a4fbb8-5f75-4f7d-9e9d-df48b35832b8",
+    "name": "BLPS-CRUD Public API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Flight - Search",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/flights?from={{fromAirport}}&to={{toAirport}}&date={{flightDate}}&passengers={{passengers}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "flights"
+          ],
+          "query": [
+            {
+              "key": "from",
+              "value": "{{fromAirport}}"
+            },
+            {
+              "key": "to",
+              "value": "{{toAirport}}"
+            },
+            {
+              "key": "date",
+              "value": "{{flightDate}}"
+            },
+            {
+              "key": "passengers",
+              "value": "{{passengers}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "if (Array.isArray(data) && data.length > 0 && data[0].id) {",
+              "  pm.collectionVariables.set('flightId', String(data[0].id));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flight - Get By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/flights/{{flightId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "flights",
+            "{{flightId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Order - Create (Internal)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{userId}},\n  \"flightId\": {{flightId}},\n  \"currency\": \"RUB\",\n  \"seatNumber\": \"12A\",\n  \"seatClass\": \"ECONOMY\",\n  \"hasBaggage\": true,\n  \"passengerName\": \"Ivan Ivanov\",\n  \"passengerPassport\": \"1234 567890\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "if (data && data.id) {",
+              "  pm.collectionVariables.set('orderId', String(data.id));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Order - Get By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders",
+            "{{orderId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Order - My Orders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/my?userId={{userId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders",
+            "my"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "{{userId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Order - Pay (Direct Internal)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cardNumber\": \"4111111111111111\",\n  \"cardHolder\": \"IVAN IVANOV\",\n  \"cvv\": \"123\",\n  \"forceFail\": false\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{orderId}}/pay",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders",
+            "{{orderId}}",
+            "pay"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Order - Cancel",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders",
+            "{{orderId}}",
+            "cancel"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Payment - Redirect URL",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/redirect/{{orderId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "redirect",
+            "{{orderId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Payment - Callback (Success)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": {{orderId}},\n  \"success\": true,\n  \"externalPaymentId\": \"pay_123\",\n  \"failureReason\": null,\n  \"paidAmount\": 7000\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/callback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "payments",
+            "callback"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Booking - Redirect URL (Airline Website)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{userId}},\n  \"flightId\": {{flightId}},\n  \"currency\": \"RUB\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/booking/redirect",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "booking",
+            "redirect"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Booking - External Callback",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{userId}},\n  \"flightId\": {{flightId}},\n  \"currency\": \"RUB\",\n  \"seatNumber\": \"14B\",\n  \"seatClass\": \"BUSINESS\",\n  \"hasBaggage\": true,\n  \"passengerName\": \"Petr Petrov\",\n  \"passengerPassport\": \"4321 098765\",\n  \"passengerEmail\": \"petr@example.com\",\n  \"passengerPhone\": \"+79990001122\",\n  \"externalPaymentId\": \"ext_pay_456\",\n  \"externalBookingId\": \"ext_booking_456\",\n  \"airlineTicketNumber\": \"555-1234567890\",\n  \"paidAmount\": 12000\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/booking/external/callback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "booking",
+            "external",
+            "callback"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Ticket - Get By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets",
+            "{{ticketId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Ticket - Download PDF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/pdf",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tickets",
+            "{{ticketId}}",
+            "pdf"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "userId",
+      "value": "1"
+    },
+    {
+      "key": "flightId",
+      "value": "1"
+    },
+    {
+      "key": "orderId",
+      "value": "1"
+    },
+    {
+      "key": "ticketId",
+      "value": "1"
+    },
+    {
+      "key": "fromAirport",
+      "value": "LED"
+    },
+    {
+      "key": "toAirport",
+      "value": "SVO"
+    },
+    {
+      "key": "flightDate",
+      "value": "2026-03-07"
+    },
+    {
+      "key": "passengers",
+      "value": "1"
+    }
+  ]
+}

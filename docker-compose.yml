@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: blps-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: web3_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: rewtqasw3253
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d web3_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -45,7 +45,10 @@ public class FlightSyncServiceImpl implements FlightSyncService {
                         .name(snapshot.airlineName())
                         .iataCode(snapshot.airlineIataCode())
                         .country(snapshot.airlineCountry())
+                        .websiteUrl(snapshot.airlineWebsiteUrl())
                         .build()));
+        airline.setWebsiteUrl(snapshot.airlineWebsiteUrl());
+        airlineRepository.save(airline);
 
         Flight flight = flightRepository.findByFlightNumber(snapshot.flightNumber())
                 .orElseGet(Flight::new);

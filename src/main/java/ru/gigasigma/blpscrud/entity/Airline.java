@@ -38,6 +38,9 @@ public class Airline {
     @Column(nullable = false)
     private String country;
 
+    @Column(name = "website_url")
+    private String websiteUrl;
+
     @OneToMany(mappedBy = "airline", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Flight> flights = new ArrayList<>();

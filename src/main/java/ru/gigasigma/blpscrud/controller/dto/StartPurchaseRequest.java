@@ -1,12 +1,10 @@
-package ru.gigasigma.blpscrud.service.dto;
+package ru.gigasigma.blpscrud.controller.dto;
 
-import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.enums.SeatClass;
 
-public record StartPurchaseCommand(
+public record StartPurchaseRequest(
         Long userId,
         Long flightId,
-        PaymentMethod paymentMethod,
         String currency,
         String seatNumber,
         SeatClass seatClass,
