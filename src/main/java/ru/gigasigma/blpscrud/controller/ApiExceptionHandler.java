@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -115,6 +117,17 @@ public class ApiExceptionHandler {
                 HttpStatus.NOT_FOUND.value(),
                 "Resource not found",
                 ex.getMessage(),
+                request.getRequestURI(),
+                List.of()
+        ));
+    }
+
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<ApiErrorResponse> handleRouteNotFound(Exception ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiErrorResponse.of(
+                HttpStatus.NOT_FOUND.value(),
+                "Route not found",
+                "No endpoint mapped for requested path",
                 request.getRequestURI(),
                 List.of()
         ));
