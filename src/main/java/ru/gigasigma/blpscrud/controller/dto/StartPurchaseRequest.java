@@ -10,6 +10,7 @@ public record StartPurchaseRequest(
         SeatClass seatClass,
         Boolean hasBaggage,
         String passengerName,
-        String passengerPassport
+        String passengerPassport,
+        String provider
 ) {
 }

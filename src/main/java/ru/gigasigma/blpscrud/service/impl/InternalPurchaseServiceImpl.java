@@ -13,6 +13,7 @@ import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.service.*;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
+import ru.gigasigma.blpscrud.util.PaymentServiceFactory;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
 
 
@@ -21,7 +22,7 @@ import ru.gigasigma.blpscrud.util.PurchaseUtil;
 public class InternalPurchaseServiceImpl implements InternalPurchaseService {
 
     private final OrderRepository orderRepository;
-    private final PaymentService paymentService;
+    private final PaymentServiceFactory paymentServiceFactory;
     private final AirlineBookingService airlineBookingService;
     private final TicketDeliveryService ticketDeliveryService;
     private final OrderService orderService;
@@ -31,7 +32,7 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
     @Transactional
     public PaymentRedirectResponse startInternalPurchase(StartPurchaseRequest request) {
         Order order = orderService.createOrderWithTicket(request, PaymentMethod.INTERNAL, null);
-        return paymentService.generatePaymentRedirectLink(order.getId());
+        return paymentServiceFactory.getPaymentService(request.provider()).generatePaymentRedirectLink(order.getId());
     }
 
     @Override
