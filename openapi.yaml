@@ -1,0 +1,665 @@
+openapi: 3.0.3
+info:
+  title: BLPS-CRUD Public API
+  version: 1.0.0
+  description: |
+    Public REST API for flight search, order management, payment flow, external booking flow, and ticket retrieval.
+servers:
+  - url: http://localhost:8080
+    description: Local environment
+
+tags:
+  - name: Flights
+  - name: Orders
+  - name: Tickets
+  - name: Booking
+  - name: Payments
+
+paths:
+  /api/flights:
+    get:
+      tags: [Flights]
+      summary: Search flights
+      operationId: searchFlights
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Departure airport code (e.g., LED)
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Arrival airport code (e.g., SVO)
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Departure date (YYYY-MM-DD)
+        - name: passengers
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Required number of available seats
+      responses:
+        '200':
+          description: Matching flights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FlightResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/flights/{id}:
+    get:
+      tags: [Flights]
+      summary: Get flight details by id
+      operationId: getFlightById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Flight details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlightResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orders:
+    post:
+      tags: [Orders]
+      summary: Create order (internal flow)
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartPurchaseRequest'
+      responses:
+        '200':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order by id
+      operationId: getOrderById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orders/my:
+    get:
+      tags: [Orders]
+      summary: Get all orders of current user (userId parameter in this lab)
+      operationId: getMyOrders
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/orders/{id}/pay:
+    post:
+      tags: [Orders]
+      summary: Direct order payment (internal flow)
+      operationId: payOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessPaymentRequest'
+      responses:
+        '200':
+          description: Payment processing result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      summary: Cancel order
+      operationId: cancelOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cancel result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/tickets/{id}:
+    get:
+      tags: [Tickets]
+      summary: Get ticket by id
+      operationId: getTicketById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/tickets/{id}/pdf:
+    get:
+      tags: [Tickets]
+      summary: Download ticket PDF
+      operationId: downloadTicketPdf
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: PDF file
+          headers:
+            Content-Disposition:
+              description: attachment; filename=ticket-{id}.pdf
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/booking/redirect:
+    post:
+      tags: [Booking]
+      summary: Generate redirect link to airline website (external booking flow)
+      operationId: generateBookingRedirect
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalRedirectRequest'
+      responses:
+        '200':
+          description: Redirect link generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedirectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/booking/external/callback:
+    post:
+      tags: [Booking]
+      summary: Callback from external airline service with completed booking data
+      operationId: externalBookingCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalBookingCallbackRequest'
+      responses:
+        '200':
+          description: External booking processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payments/redirect/{orderId}:
+    post:
+      tags: [Payments]
+      summary: Generate redirect link to external payment service
+      operationId: generatePaymentRedirect
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment redirect generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRedirectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payments/callback:
+    post:
+      tags: [Payments]
+      summary: Callback from payment service with success/failure status
+      operationId: paymentCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCallbackRequest'
+      responses:
+        '200':
+          description: Callback processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  responses:
+    BadRequest:
+      description: Validation or business error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: 'Seat already booked: 12A'
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: 'Order not found: 42'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    StartPurchaseRequest:
+      type: object
+      required:
+        - userId
+        - flightId
+        - currency
+        - seatNumber
+        - seatClass
+        - hasBaggage
+        - passengerName
+        - passengerPassport
+      properties:
+        userId:
+          type: integer
+          format: int64
+        flightId:
+          type: integer
+          format: int64
+        currency:
+          type: string
+          example: RUB
+        seatNumber:
+          type: string
+          example: 12A
+        seatClass:
+          $ref: '#/components/schemas/SeatClass'
+        hasBaggage:
+          type: boolean
+        passengerName:
+          type: string
+        passengerPassport:
+          type: string
+
+    ProcessPaymentRequest:
+      type: object
+      required: [cardNumber, cardHolder, cvv, forceFail]
+      properties:
+        cardNumber:
+          type: string
+        cardHolder:
+          type: string
+        cvv:
+          type: string
+        forceFail:
+          type: boolean
+          default: false
+
+    ExternalRedirectRequest:
+      type: object
+      required: [userId, flightId, currency]
+      properties:
+        userId:
+          type: integer
+          format: int64
+        flightId:
+          type: integer
+          format: int64
+        currency:
+          type: string
+
+    ExternalBookingCallbackRequest:
+      type: object
+      required:
+        - userId
+        - flightId
+        - currency
+        - seatNumber
+        - seatClass
+        - hasBaggage
+        - passengerName
+        - passengerPassport
+        - passengerEmail
+        - passengerPhone
+        - externalPaymentId
+        - externalBookingId
+        - airlineTicketNumber
+        - paidAmount
+      properties:
+        userId:
+          type: integer
+          format: int64
+        flightId:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        seatNumber:
+          type: string
+        seatClass:
+          $ref: '#/components/schemas/SeatClass'
+        hasBaggage:
+          type: boolean
+        passengerName:
+          type: string
+        passengerPassport:
+          type: string
+        passengerEmail:
+          type: string
+          format: email
+        passengerPhone:
+          type: string
+        externalPaymentId:
+          type: string
+        externalBookingId:
+          type: string
+        airlineTicketNumber:
+          type: string
+        paidAmount:
+          type: number
+          format: double
+
+    PaymentCallbackRequest:
+      type: object
+      required: [orderId, success, externalPaymentId, paidAmount]
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        success:
+          type: boolean
+        externalPaymentId:
+          type: string
+        failureReason:
+          type: string
+          nullable: true
+        paidAmount:
+          type: number
+          format: double
+
+    RedirectResponse:
+      type: object
+      required: [redirectUrl, bookingSessionId]
+      properties:
+        redirectUrl:
+          type: string
+        bookingSessionId:
+          type: string
+
+    PaymentRedirectResponse:
+      type: object
+      required: [redirectUrl, paymentSessionId]
+      properties:
+        redirectUrl:
+          type: string
+        paymentSessionId:
+          type: string
+
+    FlightResponse:
+      type: object
+      required:
+        - id
+        - flightNumber
+        - airlineCode
+        - departureAirport
+        - arrivalAirport
+        - departureTime
+        - arrivalTime
+        - aircraftType
+        - basePrice
+        - availableSeats
+      properties:
+        id:
+          type: integer
+          format: int64
+        flightNumber:
+          type: string
+        airlineCode:
+          type: string
+        departureAirport:
+          type: string
+        arrivalAirport:
+          type: string
+        departureTime:
+          type: string
+          format: date-time
+        arrivalTime:
+          type: string
+          format: date-time
+        aircraftType:
+          type: string
+        basePrice:
+          type: number
+          format: double
+        availableSeats:
+          type: integer
+
+    OrderResponse:
+      type: object
+      required:
+        - id
+        - userId
+        - createdAt
+        - totalPrice
+        - currency
+        - status
+        - paymentMethod
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        totalPrice:
+          type: number
+          format: double
+        currency:
+          type: string
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        externalLink:
+          type: string
+          nullable: true
+
+    TicketResponse:
+      type: object
+      required:
+        - id
+        - flightId
+        - orderId
+        - seatNumber
+        - seatClass
+        - hasBaggage
+        - passengerName
+        - passengerPassport
+      properties:
+        id:
+          type: integer
+          format: int64
+        flightId:
+          type: integer
+          format: int64
+        orderId:
+          type: integer
+          format: int64
+        seatNumber:
+          type: string
+        seatClass:
+          $ref: '#/components/schemas/SeatClass'
+        hasBaggage:
+          type: boolean
+        passengerName:
+          type: string
+        passengerPassport:
+          type: string
+
+    WorkflowResult:
+      type: object
+      required:
+        - orderId
+        - status
+        - totalPrice
+        - currency
+        - message
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        totalPrice:
+          type: number
+          format: double
+        currency:
+          type: string
+        message:
+          type: string
+        externalLink:
+          type: string
+          nullable: true
+
+    SeatClass:
+      type: string
+      enum: [ECONOMY, BUSINESS]
+
+    PaymentMethod:
+      type: string
+      enum: [INTERNAL, EXTERNAL]
+
+    OrderStatus:
+      type: string
+      enum: [PENDING, PAID, CANCELED]
