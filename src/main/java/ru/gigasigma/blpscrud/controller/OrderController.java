@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.OrderResponse;
 import ru.gigasigma.blpscrud.controller.dto.PaymentRedirectResponse;
-import ru.gigasigma.blpscrud.controller.dto.ProcessPaymentRequest;
 import ru.gigasigma.blpscrud.controller.dto.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.entity.Order;
-import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.service.InternalPurchaseService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.service.impl.OrderService;
@@ -44,18 +42,18 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public OrderResponse getById(@PathVariable @Positive(message = "id должен быть положительным числом") Long id) {
+    public OrderResponse getById(@PathVariable @Positive(message = "id must be a positive number") Long id) {
         Order order = orderService.getOrder(id);
         return OrderResponse.fromEntity(order);
     }
 
     @GetMapping("/my")
-    public List<OrderResponse> myOrders(@RequestParam @Positive(message = "userId должен быть положительным числом") Long userId) {
+    public List<OrderResponse> myOrders(@RequestParam @Positive(message = "userId must be a positive number") Long userId) {
         return orderService.findAllByUserId(userId);
     }
 
     @PostMapping("/{id}/cancel")
-    public WorkflowResult cancel(@PathVariable @Positive(message = "id должен быть положительным числом") Long id) {
+    public WorkflowResult cancel(@PathVariable @Positive(message = "id must be a positive number") Long id) {
         return orderService.cancelOrder(id);
     }
 }

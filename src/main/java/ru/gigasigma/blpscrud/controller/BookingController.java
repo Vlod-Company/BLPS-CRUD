@@ -33,7 +33,7 @@ public class BookingController {
 
     @PostMapping("/redirect")
     public ResponseEntity<Void> generateRedirect(@RequestBody @Valid ExternalRedirectRequest request) {
-        ExternalPurchaseService service = externalPurchaseServiceFactory.getService(request.iataCode());
+        ExternalPurchaseService service = externalPurchaseServiceFactory.getService(request.provider());
         RedirectResponse redirect = service.generateRedirectLink(request);
         return ResponseEntity
                 .status(HttpStatus.FOUND)

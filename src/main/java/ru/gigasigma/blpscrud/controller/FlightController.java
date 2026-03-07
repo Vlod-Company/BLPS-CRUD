@@ -26,10 +26,10 @@ public class FlightController {
 
     @GetMapping
     public List<FlightResponse> search(
-            @RequestParam(name = "from") @NotBlank(message = "Параметр from обязателен") String from,
-            @RequestParam(name = "to") @NotBlank(message = "Параметр to обязателен") String to,
-            @RequestParam @NotNull(message = "Параметр date обязателен") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(name = "passengers", defaultValue = "1") @Positive(message = "passengers должен быть больше 0") Integer passengers
+            @RequestParam(name = "from") @NotBlank(message = "Parameter 'from' is required") String from,
+            @RequestParam(name = "to") @NotBlank(message = "Parameter 'to' is required") String to,
+            @RequestParam @NotNull(message = "Parameter 'date' is required") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(name = "passengers", defaultValue = "1") @Positive(message = "passengers must be greater than 0") Integer passengers
     ) {
         return flightService.search(
                         from,
