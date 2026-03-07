@@ -1,7 +1,10 @@
 package ru.gigasigma.blpscrud.controller;
 
+import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,51 +13,45 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.OrderResponse;
+import ru.gigasigma.blpscrud.controller.dto.PaymentRedirectResponse;
 import ru.gigasigma.blpscrud.controller.dto.ProcessPaymentRequest;
 import ru.gigasigma.blpscrud.controller.dto.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.entity.Order;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
-import ru.gigasigma.blpscrud.service.PurchaseWorkflowService;
+import ru.gigasigma.blpscrud.service.InternalPurchaseService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
+import ru.gigasigma.blpscrud.service.impl.OrderService;
 
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final PurchaseWorkflowService purchaseWorkflowService;
-    private final OrderRepository orderRepository;
+    private final InternalPurchaseService internalPurchaseService;
+    private final OrderService orderService;
 
     @PostMapping
-    public OrderResponse create(@RequestBody StartPurchaseRequest request) {
-        WorkflowResult result = purchaseWorkflowService.startInternalPurchase(request);
-        Order order = orderRepository.findById(result.orderId())
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Order not found: " + result.orderId()));
-        return OrderResponse.fromEntity(order);
+    public ResponseEntity<Void> create(@RequestBody StartPurchaseRequest request) {
+        PaymentRedirectResponse redirect = internalPurchaseService.startInternalPurchase(request);
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create(redirect.redirectUrl()))
+                .build();
     }
 
     @GetMapping("/{id}")
     public OrderResponse getById(@PathVariable Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Order not found: " + id));
+        Order order = orderService.getOrder(id);
         return OrderResponse.fromEntity(order);
     }
 
     @GetMapping("/my")
     public List<OrderResponse> myOrders(@RequestParam Long userId) {
-        return orderRepository.findAllByUserId(userId)
-                .stream()
-                .map(OrderResponse::fromEntity)
-                .toList();
-    }
-
-    @PostMapping("/{id}/pay")
-    public WorkflowResult pay(@PathVariable Long id, @RequestBody ProcessPaymentRequest request) {
-        return purchaseWorkflowService.processInternalPayment(id, request);
+        return orderService.findAllByUserId(userId);
     }
 
     @PostMapping("/{id}/cancel")
     public WorkflowResult cancel(@PathVariable Long id) {
-        return purchaseWorkflowService.cancelOrder(id);
+        return orderService.cancelOrder(id);
     }
 }
