@@ -32,7 +32,14 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
     @Transactional
     public PaymentRedirectResponse startInternalPurchase(StartPurchaseRequest request) {
         Order order = orderService.createOrderWithTicket(request, PaymentMethod.INTERNAL, null);
-        return paymentServiceFactory.getPaymentService(request.provider()).generatePaymentRedirectLink(order.getId());
+        PaymentRedirectResponse redirect = paymentServiceFactory
+                .getPaymentService(request.provider())
+                .generatePaymentRedirectLink(order.getId());
+
+        if (redirect == null || redirect.redirectUrl() == null || redirect.redirectUrl().isBlank()) {
+            throw new IllegalStateException("Payment provider did not return redirect URL");
+        }
+        return redirect;
     }
 
     @Override

@@ -15,6 +15,6 @@ public class ExternalPurchaseServiceFactory {
     private final ExternalPurchaseServiceImpl externalPurchaseServiceImpl;
 
     public ExternalPurchaseService getService(String provider) {
-        return externalPurchaseServices.getOrDefault(provider, externalPurchaseServiceImpl);
+        return externalPurchaseServices.getOrDefault(provider.toUpperCase(), externalPurchaseServiceImpl);
     }
 }

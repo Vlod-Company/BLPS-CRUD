@@ -7,11 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.gigasigma.blpscrud.entity.Flight;
 import ru.gigasigma.blpscrud.repository.FlightRepository;
-import ru.gigasigma.blpscrud.service.FlightQueryService;
+import ru.gigasigma.blpscrud.service.FlightService;
 
 @Service
 @RequiredArgsConstructor
-public class FlightQueryServiceImpl implements FlightQueryService {
+public class FlightServiceImpl implements FlightService {
 
     private final FlightRepository flightRepository;
 

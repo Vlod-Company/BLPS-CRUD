@@ -1,10 +1,12 @@
 package ru.gigasigma.blpscrud.controller;
 
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,20 +19,21 @@ import ru.gigasigma.blpscrud.service.TicketPdfService;
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
+@Validated
 public class TicketController {
 
     private final TicketRepository ticketRepository;
     private final TicketPdfService ticketPdfService;
 
     @GetMapping("/{id}")
-    public TicketResponse getById(@PathVariable Long id) {
+    public TicketResponse getById(@PathVariable @Positive(message = "id must be a positive number") Long id) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Ticket not found: " + id));
         return TicketResponse.fromEntity(ticket);
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable @Positive(message = "id must be a positive number") Long id) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Ticket not found: " + id));
         byte[] pdf = ticketPdfService.generate(ticket);

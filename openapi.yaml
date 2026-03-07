@@ -240,7 +240,7 @@ paths:
               $ref: '#/components/schemas/ExternalRedirectRequest'
       responses:
         '302':
-          description: Redirect to airline provider URL
+          description: Redirect to airline iataCode URL
           headers:
             Location:
               description: Redirect URL

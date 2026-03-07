@@ -26,7 +26,7 @@ public class PaymentServiceImpl implements PaymentService {
         orderService.assertPending(order);
 
         String sessionId = UUID.randomUUID().toString();
-        String redirectUrl = "https://payment-gateway.local/checkout"
+        String redirectUrl = "https://google.com"
                 + "?session=" + sessionId
                 + "&orderId=" + order.getId()
                 + "&amount=" + order.getTotalPrice()
