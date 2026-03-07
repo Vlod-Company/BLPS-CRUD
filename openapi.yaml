@@ -95,12 +95,13 @@ paths:
             schema:
               $ref: '#/components/schemas/StartPurchaseRequest'
       responses:
-        '200':
-          description: Order created
-          content:
-            application/json:
+        '302':
+          description: Redirect to external payment service URL
+          headers:
+            Location:
+              description: Redirect URL
               schema:
-                $ref: '#/components/schemas/OrderResponse'
+                type: string
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -151,36 +152,6 @@ paths:
                   $ref: '#/components/schemas/OrderResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
-
-  /api/orders/{id}/pay:
-    post:
-      tags: [Orders]
-      summary: Direct order payment (internal flow)
-      operationId: payOrder
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProcessPaymentRequest'
-      responses:
-        '200':
-          description: Payment processing result
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WorkflowResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
 
   /api/orders/{id}/cancel:
     post:
@@ -268,12 +239,13 @@ paths:
             schema:
               $ref: '#/components/schemas/ExternalRedirectRequest'
       responses:
-        '200':
-          description: Redirect link generated
-          content:
-            application/json:
+        '302':
+          description: Redirect to airline provider URL
+          headers:
+            Location:
+              description: Redirect URL
               schema:
-                $ref: '#/components/schemas/RedirectResponse'
+                type: string
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -297,30 +269,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkflowResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/payments/redirect/{orderId}:
-    post:
-      tags: [Payments]
-      summary: Generate redirect link to external payment service
-      operationId: generatePaymentRedirect
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: Payment redirect generated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaymentRedirectResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -425,7 +373,7 @@ components:
 
     ExternalRedirectRequest:
       type: object
-      required: [userId, flightId, currency]
+      required: [userId, flightId, currency, provider]
       properties:
         userId:
           type: integer
@@ -434,6 +382,8 @@ components:
           type: integer
           format: int64
         currency:
+          type: string
+        provider:
           type: string
 
     ExternalBookingCallbackRequest:
@@ -504,24 +454,6 @@ components:
         paidAmount:
           type: number
           format: double
-
-    RedirectResponse:
-      type: object
-      required: [redirectUrl, bookingSessionId]
-      properties:
-        redirectUrl:
-          type: string
-        bookingSessionId:
-          type: string
-
-    PaymentRedirectResponse:
-      type: object
-      required: [redirectUrl, paymentSessionId]
-      properties:
-        redirectUrl:
-          type: string
-        paymentSessionId:
-          type: string
 
     FlightResponse:
       type: object
