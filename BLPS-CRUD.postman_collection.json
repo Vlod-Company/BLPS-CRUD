@@ -1,12 +1,28 @@
 {
   "info": {
-    "_postman_id": "f1a4fbb8-5f75-4f7d-9e9d-df48b35832b8",
+    "_postman_id": "9729dd76-8759-4224-b3b9-6f6a70d9bf5b",
     "name": "BLPS-CRUD Public API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "47671829",
+    "_collection_link": "https://go.postman.co/collection/47671829-9729dd76-8759-4224-b3b9-6f6a70d9bf5b?source=collection_link"
   },
   "item": [
     {
       "name": "Flight - Search",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "if (Array.isArray(data) && data.length > 0 && data[0].id) {",
+              "  pm.collectionVariables.set('flightId', String(data[0].id));",
+              "}"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
@@ -39,20 +55,7 @@
           ]
         }
       },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "const data = pm.response.json();",
-              "if (Array.isArray(data) && data.length > 0 && data[0].id) {",
-              "  pm.collectionVariables.set('flightId', String(data[0].id));",
-              "}"
-            ]
-          }
-        }
-      ]
+      "response": []
     },
     {
       "name": "Flight - Get By Id",
@@ -70,10 +73,25 @@
             "{{flightId}}"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Order - Create (Internal)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const data = pm.response.json();",
+              "if (data && data.id) {",
+              "  pm.collectionVariables.set('orderId', String(data.id));",
+              "}"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -97,20 +115,7 @@
           ]
         }
       },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "const data = pm.response.json();",
-              "if (data && data.id) {",
-              "  pm.collectionVariables.set('orderId', String(data.id));",
-              "}"
-            ]
-          }
-        }
-      ]
+      "response": []
     },
     {
       "name": "Order - Get By Id",
@@ -128,7 +133,8 @@
             "{{orderId}}"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Order - My Orders",
@@ -152,7 +158,8 @@
             }
           ]
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Order - Pay (Direct Internal)",
@@ -180,48 +187,11 @@
             "pay"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
-      "name": "Order - Cancel",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "orders",
-            "{{orderId}}",
-            "cancel"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Payment - Redirect URL",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/payments/redirect/{{orderId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "payments",
-            "redirect",
-            "{{orderId}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Payment - Callback (Success)",
+      "name": "Payment - Callback",
       "request": {
         "method": "POST",
         "header": [
@@ -245,10 +215,31 @@
             "callback"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
-      "name": "Booking - Redirect URL (Airline Website)",
+      "name": "Order - Cancel",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "orders",
+            "{{orderId}}",
+            "cancel"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Order - airline",
       "request": {
         "method": "POST",
         "header": [
@@ -272,7 +263,8 @@
             "redirect"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Booking - External Callback",
@@ -300,7 +292,8 @@
             "callback"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Ticket - Get By Id",
@@ -318,7 +311,8 @@
             "{{ticketId}}"
           ]
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Ticket - Download PDF",
@@ -337,7 +331,8 @@
             "pdf"
           ]
         }
-      }
+      },
+      "response": []
     }
   ],
   "variable": [
