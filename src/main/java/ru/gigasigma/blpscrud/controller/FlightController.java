@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.FlightResponse;
-import ru.gigasigma.blpscrud.service.FlightQueryService;
+import ru.gigasigma.blpscrud.service.FlightService;
 
 @RestController
 @RequestMapping("/api/flights")
@@ -22,7 +22,7 @@ import ru.gigasigma.blpscrud.service.FlightQueryService;
 @Validated
 public class FlightController {
 
-    private final FlightQueryService flightQueryService;
+    private final FlightService flightService;
 
     @GetMapping
     public List<FlightResponse> search(
@@ -31,7 +31,7 @@ public class FlightController {
             @RequestParam @NotNull(message = "Параметр date обязателен") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(name = "passengers", defaultValue = "1") @Positive(message = "passengers должен быть больше 0") Integer passengers
     ) {
-        return flightQueryService.search(
+        return flightService.search(
                         from,
                         to,
                         date.atStartOfDay(),
@@ -45,6 +45,6 @@ public class FlightController {
 
     @GetMapping("/{id}")
     public FlightResponse getById(@PathVariable @Positive(message = "id должен быть положительным числом") Long id) {
-        return FlightResponse.fromEntity(flightQueryService.getById(id));
+        return FlightResponse.fromEntity(flightService.getById(id));
     }
 }

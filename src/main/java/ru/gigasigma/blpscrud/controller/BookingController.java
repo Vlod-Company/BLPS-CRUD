@@ -15,7 +15,7 @@ import ru.gigasigma.blpscrud.controller.dto.ExternalBookingCallbackRequest;
 import ru.gigasigma.blpscrud.controller.dto.ExternalRedirectRequest;
 import ru.gigasigma.blpscrud.controller.dto.RedirectResponse;
 import ru.gigasigma.blpscrud.service.ExternalPurchaseService;
-import ru.gigasigma.blpscrud.service.FlightQueryService;
+import ru.gigasigma.blpscrud.service.FlightService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.util.ExternalPurchaseServiceFactory;
 
@@ -29,7 +29,7 @@ import java.net.URI;
 public class BookingController {
 
     private final ExternalPurchaseServiceFactory externalPurchaseServiceFactory;
-    private final FlightQueryService flightQueryService;
+    private final FlightService flightService;
 
     @PostMapping("/redirect")
     public ResponseEntity<Void> generateRedirect(@RequestBody @Valid ExternalRedirectRequest request) {
@@ -43,7 +43,7 @@ public class BookingController {
 
     @PostMapping("/external/callback")
     public WorkflowResult externalCallback(@RequestBody @Valid ExternalBookingCallbackRequest request) {
-        String iata = flightQueryService.getById(request.flightId()).getAirline().getIataCode();
+        String iata = flightService.getById(request.flightId()).getAirline().getIataCode();
         ExternalPurchaseService service = externalPurchaseServiceFactory.getService(iata);
         return service.completeExternalBooking(request);
     }
