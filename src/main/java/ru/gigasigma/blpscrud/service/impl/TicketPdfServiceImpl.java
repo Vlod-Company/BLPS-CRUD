@@ -2,6 +2,7 @@ package ru.gigasigma.blpscrud.service.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -14,9 +15,9 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
+import org.springframework.stereotype.Service;
 import ru.gigasigma.blpscrud.entity.Flight;
 import ru.gigasigma.blpscrud.entity.Order;
-import org.springframework.stereotype.Service;
 import ru.gigasigma.blpscrud.entity.Ticket;
 import ru.gigasigma.blpscrud.service.TicketPdfService;
 
@@ -208,7 +209,85 @@ public class TicketPdfServiceImpl implements TicketPdfService {
         if (value == null) {
             return "";
         }
-        return value.replace('\n', ' ').replace('\r', ' ').trim();
+
+        String normalized = value.replace('\n', ' ').replace('\r', ' ').trim();
+        StringBuilder builder = new StringBuilder(normalized.length());
+        for (char ch : normalized.toCharArray()) {
+            builder.append(transliterate(ch));
+        }
+
+        String asciiSafe = Normalizer.normalize(builder.toString(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .replaceAll("[^\\x20-\\x7E]", "?");
+        return asciiSafe.isBlank() ? "-" : asciiSafe;
+    }
+
+    private String transliterate(char ch) {
+        return switch (ch) {
+            case '\u0410' -> "A";
+            case '\u0411' -> "B";
+            case '\u0412' -> "V";
+            case '\u0413' -> "G";
+            case '\u0414' -> "D";
+            case '\u0415', '\u0401' -> "E";
+            case '\u0416' -> "Zh";
+            case '\u0417' -> "Z";
+            case '\u0418', '\u0419' -> "I";
+            case '\u041A' -> "K";
+            case '\u041B' -> "L";
+            case '\u041C' -> "M";
+            case '\u041D' -> "N";
+            case '\u041E' -> "O";
+            case '\u041F' -> "P";
+            case '\u0420' -> "R";
+            case '\u0421' -> "S";
+            case '\u0422' -> "T";
+            case '\u0423' -> "U";
+            case '\u0424' -> "F";
+            case '\u0425' -> "Kh";
+            case '\u0426' -> "Ts";
+            case '\u0427' -> "Ch";
+            case '\u0428' -> "Sh";
+            case '\u0429' -> "Shch";
+            case '\u042A' -> "";
+            case '\u042B' -> "Y";
+            case '\u042C' -> "";
+            case '\u042D' -> "E";
+            case '\u042E' -> "Yu";
+            case '\u042F' -> "Ya";
+            case '\u0430' -> "a";
+            case '\u0431' -> "b";
+            case '\u0432' -> "v";
+            case '\u0433' -> "g";
+            case '\u0434' -> "d";
+            case '\u0435', '\u0451' -> "e";
+            case '\u0436' -> "zh";
+            case '\u0437' -> "z";
+            case '\u0438', '\u0439' -> "i";
+            case '\u043A' -> "k";
+            case '\u043B' -> "l";
+            case '\u043C' -> "m";
+            case '\u043D' -> "n";
+            case '\u043E' -> "o";
+            case '\u043F' -> "p";
+            case '\u0440' -> "r";
+            case '\u0441' -> "s";
+            case '\u0442' -> "t";
+            case '\u0443' -> "u";
+            case '\u0444' -> "f";
+            case '\u0445' -> "kh";
+            case '\u0446' -> "ts";
+            case '\u0447' -> "ch";
+            case '\u0448' -> "sh";
+            case '\u0449' -> "shch";
+            case '\u044A' -> "";
+            case '\u044B' -> "y";
+            case '\u044C' -> "";
+            case '\u044D' -> "e";
+            case '\u044E' -> "yu";
+            case '\u044F' -> "ya";
+            default -> String.valueOf(ch);
+        };
     }
 
     private String crop(String value, int maxLen) {
