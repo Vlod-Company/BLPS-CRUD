@@ -1,5 +1,6 @@
 package ru.gigasigma.blpscrud.controller;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -181,12 +182,19 @@ public class ApiExceptionHandler {
         return value == null ? null : String.valueOf(value);
     }
 
+    @Schema(name = "ApiErrorResponse", description = "Unified API error payload")
     public record ApiErrorResponse(
+            @Schema(description = "Time when the error response was generated", example = "2026-03-21T15:10:00")
             LocalDateTime timestamp,
+            @Schema(description = "HTTP status code", example = "400")
             int status,
+            @Schema(description = "Short error title", example = "Validation error")
             String error,
+            @Schema(description = "Human-readable error details", example = "Request body contains invalid fields")
             String message,
+            @Schema(description = "Request path that produced the error", example = "/api/orders")
             String path,
+            @Schema(description = "List of invalid fields or parameters")
             List<ApiFieldViolation> violations
     ) {
         static ApiErrorResponse of(int status, String error, String message, String path, List<ApiFieldViolation> violations) {
@@ -194,9 +202,13 @@ public class ApiExceptionHandler {
         }
     }
 
+    @Schema(name = "ApiFieldViolation", description = "Validation error details for a single field")
     public record ApiFieldViolation(
+            @Schema(description = "Field or parameter name", example = "userId")
             String field,
+            @Schema(description = "Validation message", example = "userId must be a positive number")
             String message,
+            @Schema(description = "Rejected value", example = "0")
             String rejectedValue
     ) {
     }

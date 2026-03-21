@@ -1,5 +1,13 @@
 package ru.gigasigma.blpscrud.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import java.net.URI;
@@ -10,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,13 +33,27 @@ import ru.gigasigma.blpscrud.service.impl.OrderService;
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Orders")
 public class OrderController {
 
     private final InternalPurchaseService internalPurchaseService;
     private final OrderService orderService;
 
-    @PostMapping
-    public ResponseEntity<Void> create(@RequestBody @Valid StartPurchaseRequest request) {
+    @org.springframework.web.bind.annotation.PostMapping
+    @Operation(summary = "Create order", description = "Creates an internal order and responds with a redirect to the payment page.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "302", description = "Redirect to payment page"),
+            @ApiResponse(responseCode = "400", description = "Invalid order payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Flight or user not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
+    })
+    public ResponseEntity<Void> create(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Order creation payload",
+                    content = @Content(schema = @Schema(implementation = StartPurchaseRequest.class))
+            )
+            @org.springframework.web.bind.annotation.RequestBody @Valid StartPurchaseRequest request
+    ) {
         PaymentRedirectResponse redirect = internalPurchaseService.startInternalPurchase(request);
         return ResponseEntity
                 .status(HttpStatus.FOUND)
@@ -42,18 +62,44 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public OrderResponse getById(@PathVariable @Positive(message = "id must be a positive number") Long id) {
+    @Operation(summary = "Get order by id", description = "Returns a single order with its current status and pricing information.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order found", content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid identifier", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
+    })
+    public OrderResponse getById(
+            @Parameter(description = "Order identifier", example = "501", required = true)
+            @PathVariable @Positive(message = "id must be a positive number") Long id
+    ) {
         Order order = orderService.getOrder(id);
         return OrderResponse.fromEntity(order);
     }
 
     @GetMapping("/my")
-    public List<OrderResponse> myOrders(@RequestParam @Positive(message = "userId must be a positive number") Long userId) {
+    @Operation(summary = "List user orders", description = "Returns all orders belonging to the specified user.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Orders loaded", content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrderResponse.class)))),
+            @ApiResponse(responseCode = "400", description = "Invalid query parameter", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
+    })
+    public List<OrderResponse> myOrders(
+            @Parameter(description = "User identifier", example = "42", required = true)
+            @RequestParam @Positive(message = "userId must be a positive number") Long userId
+    ) {
         return orderService.findAllByUserId(userId);
     }
 
-    @PostMapping("/{id}/cancel")
-    public WorkflowResult cancel(@PathVariable @Positive(message = "id must be a positive number") Long id) {
+    @org.springframework.web.bind.annotation.PostMapping("/{id}/cancel")
+    @Operation(summary = "Cancel order", description = "Cancels an existing order when its current status allows it.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order cancelled", content = @Content(schema = @Schema(implementation = WorkflowResult.class))),
+            @ApiResponse(responseCode = "400", description = "Order cannot be cancelled or id is invalid", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
+    })
+    public WorkflowResult cancel(
+            @Parameter(description = "Order identifier", example = "501", required = true)
+            @PathVariable @Positive(message = "id must be a positive number") Long id
+    ) {
         return orderService.cancelOrder(id);
     }
 }
