@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.gigasigma.blpscrud.controller.dto.RegisterRequest;
-import ru.gigasigma.blpscrud.controller.dto.RegisterResponse;
+import ru.gigasigma.blpscrud.controller.dto.request.RegisterRequest;
+import ru.gigasigma.blpscrud.controller.dto.response.RegisterResponse;
 import ru.gigasigma.blpscrud.entity.User;
 import ru.gigasigma.blpscrud.service.AuthRegistrationService;
 

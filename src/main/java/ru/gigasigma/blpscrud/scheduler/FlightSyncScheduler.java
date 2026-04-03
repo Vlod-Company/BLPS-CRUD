@@ -3,7 +3,7 @@ package ru.gigasigma.blpscrud.scheduler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import ru.gigasigma.blpscrud.service.FlightSyncService;
+import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
 
 @Component
 @RequiredArgsConstructor

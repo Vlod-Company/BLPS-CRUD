@@ -16,17 +16,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import ru.gigasigma.blpscrud.controller.dto.OrderResponse;
-import ru.gigasigma.blpscrud.controller.dto.PaymentRedirectResponse;
-import ru.gigasigma.blpscrud.controller.dto.StartPurchaseRequest;
+import org.springframework.web.bind.annotation.*;
+import ru.gigasigma.blpscrud.controller.dto.response.OrderResponse;
+import ru.gigasigma.blpscrud.controller.dto.response.PaymentRedirectResponse;
+import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.entity.Order;
-import ru.gigasigma.blpscrud.service.InternalPurchaseService;
+import ru.gigasigma.blpscrud.service.internalPurchase.InternalPurchaseService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
-import ru.gigasigma.blpscrud.service.impl.OrderService;
+import ru.gigasigma.blpscrud.service.OrderService;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -38,7 +35,7 @@ public class OrderController {
     private final InternalPurchaseService internalPurchaseService;
     private final OrderService orderService;
 
-    @org.springframework.web.bind.annotation.PostMapping
+    @PostMapping
     @Operation(summary = "Create order", description = "Creates an internal order for the authenticated user and responds with a redirect to the payment page.")
     @ApiResponses({
             @ApiResponse(responseCode = "302", description = "Redirect to payment page"),

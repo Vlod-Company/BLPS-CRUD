@@ -2,8 +2,8 @@ package ru.gigasigma.blpscrud.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.gigasigma.blpscrud.service.ExternalPurchaseService;
-import ru.gigasigma.blpscrud.service.impl.ExternalPurchaseServiceImpl;
+import ru.gigasigma.blpscrud.service.externalAirlineLogic.ExternalPurchaseService;
+import ru.gigasigma.blpscrud.service.externalAirlineLogic.impl.ExternalPurchaseServiceImpl;
 
 import java.util.Map;
 

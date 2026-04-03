@@ -17,12 +17,12 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.gigasigma.blpscrud.controller.dto.ExternalBookingCallbackRequest;
-import ru.gigasigma.blpscrud.controller.dto.ExternalRedirectRequest;
-import ru.gigasigma.blpscrud.controller.dto.RedirectResponse;
-import ru.gigasigma.blpscrud.service.ExternalPurchaseService;
-import ru.gigasigma.blpscrud.service.FlightService;
+import ru.gigasigma.blpscrud.controller.dto.request.ExternalBookingCallbackRequest;
+import ru.gigasigma.blpscrud.controller.dto.request.ExternalRedirectRequest;
+import ru.gigasigma.blpscrud.controller.dto.response.RedirectResponse;
+import ru.gigasigma.blpscrud.service.externalAirlineLogic.ExternalPurchaseService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
+import ru.gigasigma.blpscrud.service.FlightService;
 import ru.gigasigma.blpscrud.util.ExternalPurchaseServiceFactory;
 
 @RestController

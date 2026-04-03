@@ -12,8 +12,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.gigasigma.blpscrud.controller.dto.PaymentCallbackRequest;
-import ru.gigasigma.blpscrud.service.InternalPurchaseService;
+import ru.gigasigma.blpscrud.controller.dto.request.PaymentCallbackRequest;
+import ru.gigasigma.blpscrud.service.internalPurchase.InternalPurchaseService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 
 @RestController
