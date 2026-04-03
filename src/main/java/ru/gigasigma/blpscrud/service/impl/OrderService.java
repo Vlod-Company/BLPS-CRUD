@@ -1,7 +1,10 @@
 package ru.gigasigma.blpscrud.service.impl;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.gigasigma.blpscrud.controller.dto.OrderResponse;
@@ -15,32 +18,26 @@ import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.repository.FlightRepository;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.repository.TicketRepository;
-import ru.gigasigma.blpscrud.repository.UserRepository;
+import ru.gigasigma.blpscrud.service.CurrentUserService;
 import ru.gigasigma.blpscrud.service.FlightSyncService;
 import ru.gigasigma.blpscrud.service.OrderManagementService;
 import ru.gigasigma.blpscrud.service.TicketPricingService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class OrderService implements OrderManagementService {
 
-    private final UserRepository userRepository;
     private final FlightSyncService flightSyncService;
     private final TicketRepository ticketRepository;
     private final TicketPricingService ticketPricingService;
     private final OrderRepository orderRepository;
     private final FlightRepository flightRepository;
     private final PurchaseUtil purchaseUtil;
+    private final CurrentUserService currentUserService;
 
-    public Order createOrderWithTicket(StartPurchaseRequest request, PaymentMethod paymentMethod, String externalLink) {
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found: " + request.userId()));
-
+    public Order createOrderWithTicket(StartPurchaseRequest request, User user, PaymentMethod paymentMethod, String externalLink) {
         Flight flight = flightSyncService.refreshFlightForPurchase(request.flightId());
 
         if (flight.getAvailableSeats() <= 0) {
@@ -88,6 +85,18 @@ public class OrderService implements OrderManagementService {
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
     }
 
+    public Order getAccessibleOrder(Long orderId) {
+        if (currentUserService.isAdmin()) {
+            return getOrder(orderId);
+        }
+        String login = currentUserService.getCurrentLogin();
+        return orderRepository.findByIdAndUserLogin(orderId, login)
+                .orElseGet(() -> {
+                    Order order = getOrder(orderId);
+                    throw new AccessDeniedException("You do not have access to this order");
+                });
+    }
+
     public Ticket getOrderTicket(Long orderId) {
         return ticketRepository.findFirstByOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found for order: " + orderId));
@@ -99,11 +108,17 @@ public class OrderService implements OrderManagementService {
         }
     }
 
-    public List<OrderResponse> findAllByUserId(Long userId) {
-        return orderRepository.findAllByUserId(userId)
+    public List<OrderResponse> findCurrentUserOrders() {
+        String login = currentUserService.getCurrentLogin();
+        return orderRepository.findAllByUserLogin(login)
                 .stream()
                 .map(OrderResponse::fromEntity)
                 .toList();
+    }
+
+    public WorkflowResult cancelOrderAccessible(Long orderId) {
+        Order order = getAccessibleOrder(orderId);
+        return cancelOrder(order.getId());
     }
 
     @Override

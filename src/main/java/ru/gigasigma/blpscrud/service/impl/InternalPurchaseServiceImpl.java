@@ -8,14 +8,17 @@ import ru.gigasigma.blpscrud.controller.dto.PaymentRedirectResponse;
 import ru.gigasigma.blpscrud.controller.dto.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.entity.Order;
 import ru.gigasigma.blpscrud.entity.Ticket;
+import ru.gigasigma.blpscrud.entity.User;
 import ru.gigasigma.blpscrud.enums.OrderStatus;
 import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
-import ru.gigasigma.blpscrud.service.*;
+import ru.gigasigma.blpscrud.service.AirlineBookingService;
+import ru.gigasigma.blpscrud.service.CurrentUserService;
+import ru.gigasigma.blpscrud.service.InternalPurchaseService;
+import ru.gigasigma.blpscrud.service.TicketDeliveryService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.util.PaymentServiceFactory;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
-
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +30,13 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
     private final TicketDeliveryService ticketDeliveryService;
     private final OrderService orderService;
     private final PurchaseUtil purchaseUtil;
+    private final CurrentUserService currentUserService;
 
     @Override
     @Transactional
     public PaymentRedirectResponse startInternalPurchase(StartPurchaseRequest request) {
-        Order order = orderService.createOrderWithTicket(request, PaymentMethod.INTERNAL, null);
+        User user = currentUserService.getCurrentUser();
+        Order order = orderService.createOrderWithTicket(request, user, PaymentMethod.INTERNAL, null);
         PaymentRedirectResponse redirect = paymentServiceFactory
                 .getPaymentService(request.provider())
                 .generatePaymentRedirectLink(order.getId());

@@ -37,7 +37,7 @@ public class BookingController {
     private final FlightService flightService;
 
     @PostMapping("/redirect")
-    @Operation(summary = "Generate external booking redirect", description = "Creates an external booking session and responds with HTTP 302 to the provider page.")
+    @Operation(summary = "Generate external booking redirect", description = "Creates an external booking session for the authenticated user and responds with HTTP 302 to the provider page.")
     @ApiResponses({
             @ApiResponse(responseCode = "302", description = "Redirect to provider booking page"),
             @ApiResponse(responseCode = "400", description = "Invalid redirect payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),

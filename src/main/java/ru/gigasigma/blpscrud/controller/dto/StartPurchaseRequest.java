@@ -10,11 +10,6 @@ import ru.gigasigma.blpscrud.enums.SeatClass;
 
 @Schema(name = "StartPurchaseRequest", description = "Payload for creating an internal order and redirecting to payment")
 public record StartPurchaseRequest(
-        @Schema(description = "User identifier", example = "42")
-        @NotNull(message = "userId is required")
-        @Positive(message = "userId must be a positive number")
-        Long userId,
-
         @Schema(description = "Flight identifier", example = "105")
         @NotNull(message = "flightId is required")
         @Positive(message = "flightId must be a positive number")

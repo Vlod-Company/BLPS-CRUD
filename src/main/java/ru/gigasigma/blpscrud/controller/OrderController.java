@@ -19,7 +19,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.OrderResponse;
 import ru.gigasigma.blpscrud.controller.dto.PaymentRedirectResponse;
@@ -40,11 +39,11 @@ public class OrderController {
     private final OrderService orderService;
 
     @org.springframework.web.bind.annotation.PostMapping
-    @Operation(summary = "Create order", description = "Creates an internal order and responds with a redirect to the payment page.")
+    @Operation(summary = "Create order", description = "Creates an internal order for the authenticated user and responds with a redirect to the payment page.")
     @ApiResponses({
             @ApiResponse(responseCode = "302", description = "Redirect to payment page"),
             @ApiResponse(responseCode = "400", description = "Invalid order payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Flight or user not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
+            @ApiResponse(responseCode = "404", description = "Flight not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
     })
     public ResponseEntity<Void> create(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -62,44 +61,42 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get order by id", description = "Returns a single order with its current status and pricing information.")
+    @Operation(summary = "Get order by id", description = "Returns a single order when it belongs to the authenticated user or the caller has ROLE_ADMIN.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Order found", content = @Content(schema = @Schema(implementation = OrderResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid identifier", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
     })
     public OrderResponse getById(
             @Parameter(description = "Order identifier", example = "501", required = true)
             @PathVariable @Positive(message = "id must be a positive number") Long id
     ) {
-        Order order = orderService.getOrder(id);
+        Order order = orderService.getAccessibleOrder(id);
         return OrderResponse.fromEntity(order);
     }
 
     @GetMapping("/my")
-    @Operation(summary = "List user orders", description = "Returns all orders belonging to the specified user.")
+    @Operation(summary = "List current user orders", description = "Returns all orders belonging to the authenticated user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Orders loaded", content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrderResponse.class)))),
-            @ApiResponse(responseCode = "400", description = "Invalid query parameter", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Orders loaded", content = @Content(array = @ArraySchema(schema = @Schema(implementation = OrderResponse.class))))
     })
-    public List<OrderResponse> myOrders(
-            @Parameter(description = "User identifier", example = "42", required = true)
-            @RequestParam @Positive(message = "userId must be a positive number") Long userId
-    ) {
-        return orderService.findAllByUserId(userId);
+    public List<OrderResponse> myOrders() {
+        return orderService.findCurrentUserOrders();
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/{id}/cancel")
-    @Operation(summary = "Cancel order", description = "Cancels an existing order when its current status allows it.")
+    @Operation(summary = "Cancel order", description = "Cancels an order when it belongs to the authenticated user or the caller has ROLE_ADMIN.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Order cancelled", content = @Content(schema = @Schema(implementation = WorkflowResult.class))),
             @ApiResponse(responseCode = "400", description = "Order cannot be cancelled or id is invalid", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
     })
     public WorkflowResult cancel(
             @Parameter(description = "Order identifier", example = "501", required = true)
             @PathVariable @Positive(message = "id must be a positive number") Long id
     ) {
-        return orderService.cancelOrder(id);
+        return orderService.cancelOrderAccessible(id);
     }
 }

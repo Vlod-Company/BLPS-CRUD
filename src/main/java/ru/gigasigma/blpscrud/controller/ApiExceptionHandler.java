@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -123,6 +124,17 @@ public class ApiExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiErrorResponse.of(
+                HttpStatus.FORBIDDEN.value(),
+                "Access denied",
+                ex.getMessage(),
+                request.getRequestURI(),
+                List.of()
+        ));
+    }
+
     @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
     public ResponseEntity<ApiErrorResponse> handleRouteNotFound(Exception ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiErrorResponse.of(
@@ -204,11 +216,11 @@ public class ApiExceptionHandler {
 
     @Schema(name = "ApiFieldViolation", description = "Validation error details for a single field")
     public record ApiFieldViolation(
-            @Schema(description = "Field or parameter name", example = "userId")
+            @Schema(description = "Field or parameter name", example = "login")
             String field,
-            @Schema(description = "Validation message", example = "userId must be a positive number")
+            @Schema(description = "Validation message", example = "login length must be at least 4")
             String message,
-            @Schema(description = "Rejected value", example = "0")
+            @Schema(description = "Rejected value", example = "abc")
             String rejectedValue
     ) {
     }

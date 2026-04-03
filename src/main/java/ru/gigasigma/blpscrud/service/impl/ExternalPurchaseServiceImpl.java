@@ -1,6 +1,9 @@
 package ru.gigasigma.blpscrud.service.impl;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +20,13 @@ import ru.gigasigma.blpscrud.repository.FlightRepository;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.repository.TicketRepository;
 import ru.gigasigma.blpscrud.repository.UserRepository;
+import ru.gigasigma.blpscrud.service.CurrentUserService;
 import ru.gigasigma.blpscrud.service.ExternalPurchaseService;
 import ru.gigasigma.blpscrud.service.FlightSyncService;
 import ru.gigasigma.blpscrud.service.TicketDeliveryService;
 import ru.gigasigma.blpscrud.service.TicketPricingService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,16 +40,16 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
     private final FlightSyncService flightSyncService;
     private final TicketDeliveryService ticketDeliveryService;
     private final PurchaseUtil purchaseUtil;
+    private final CurrentUserService currentUserService;
 
     @Override
     public RedirectResponse generateRedirectLink(ExternalRedirectRequest request) {
-        userRepository.findById(request.userId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found: " + request.userId()));
+        User user = currentUserService.getCurrentUser();
         Flight flight = flightSyncService.refreshFlightForPurchase(request.flightId());
 
         String sessionId = UUID.randomUUID().toString();
         String redirectUrl = purchaseUtil.buildAirlineRedirectUrl(flight, "session=" + sessionId
-                + "&userId=" + request.userId()
+                + "&userId=" + user.getId()
                 + "&flightId=" + request.flightId()
                 + "&currency=" + request.currency());
         return new RedirectResponse(redirectUrl, sessionId);

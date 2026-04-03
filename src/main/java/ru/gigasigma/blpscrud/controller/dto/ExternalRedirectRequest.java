@@ -9,11 +9,6 @@ import jakarta.validation.constraints.Size;
 
 @Schema(name = "ExternalRedirectRequest", description = "Payload for generating an external booking redirect")
 public record ExternalRedirectRequest(
-        @Schema(description = "User identifier", example = "42")
-        @NotNull(message = "userId is required")
-        @Positive(message = "userId must be a positive number")
-        Long userId,
-
         @Schema(description = "Flight identifier", example = "105")
         @NotNull(message = "flightId is required")
         @Positive(message = "flightId must be a positive number")
