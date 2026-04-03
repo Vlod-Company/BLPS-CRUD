@@ -20,7 +20,6 @@ public class XmlUserLoginModule implements LoginModule {
     private CallbackHandler callbackHandler;
     private XmlUserStore xmlUserStore;
     private PasswordEncoder passwordEncoder;
-    private UserPrincipal userPrincipal;
     private RolePrincipal rolePrincipal;
     private boolean authenticated;
 
@@ -66,7 +65,6 @@ public class XmlUserLoginModule implements LoginModule {
             throw new FailedLoginException("Invalid username or password");
         }
 
-        this.userPrincipal = new UserPrincipal(account.login());
         this.rolePrincipal = new RolePrincipal(account.role());
         this.authenticated = true;
         return true;
@@ -77,7 +75,6 @@ public class XmlUserLoginModule implements LoginModule {
         if (!authenticated) {
             return false;
         }
-        subject.getPrincipals().add(userPrincipal);
         subject.getPrincipals().add(rolePrincipal);
         return true;
     }
@@ -90,9 +87,6 @@ public class XmlUserLoginModule implements LoginModule {
 
     @Override
     public boolean logout() {
-        if (Objects.nonNull(userPrincipal)) {
-            subject.getPrincipals().remove(userPrincipal);
-        }
         if (Objects.nonNull(rolePrincipal)) {
             subject.getPrincipals().remove(rolePrincipal);
         }
@@ -102,7 +96,6 @@ public class XmlUserLoginModule implements LoginModule {
 
     private void clearState() {
         this.authenticated = false;
-        this.userPrincipal = null;
         this.rolePrincipal = null;
     }
 }
