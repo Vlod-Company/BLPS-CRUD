@@ -13,26 +13,26 @@ import ru.gigasigma.blpscrud.controller.dto.response.RedirectResponse;
 import ru.gigasigma.blpscrud.entity.Flight;
 import ru.gigasigma.blpscrud.entity.Order;
 import ru.gigasigma.blpscrud.entity.Ticket;
-import ru.gigasigma.blpscrud.entity.User;
 import ru.gigasigma.blpscrud.enums.OrderStatus;
 import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.repository.FlightRepository;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.repository.TicketRepository;
-import ru.gigasigma.blpscrud.repository.UserRepository;
+import ru.gigasigma.blpscrud.security.XmlAccount;
+import ru.gigasigma.blpscrud.security.XmlUserStore;
 import ru.gigasigma.blpscrud.service.CurrentUserService;
+import ru.gigasigma.blpscrud.service.TicketPricingService;
+import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.service.externalAirlineLogic.ExternalPurchaseService;
 import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
-import ru.gigasigma.blpscrud.service.TicketPricingService;
 import ru.gigasigma.blpscrud.service.ticketDelivery.TicketDeliveryService;
-import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
 
 @Service
 @RequiredArgsConstructor
 public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
 
-    private final UserRepository userRepository;
+    private final XmlUserStore xmlUserStore;
     private final FlightRepository flightRepository;
     private final OrderRepository orderRepository;
     private final TicketRepository ticketRepository;
@@ -44,12 +44,12 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
 
     @Override
     public RedirectResponse generateRedirectLink(ExternalRedirectRequest request) {
-        User user = currentUserService.getCurrentUser();
+        Long userId = currentUserService.getCurrentUserId();
         Flight flight = flightSyncService.refreshFlightForPurchase(request.flightId());
 
         String sessionId = UUID.randomUUID().toString();
         String redirectUrl = purchaseUtil.buildAirlineRedirectUrl(flight, "session=" + sessionId
-                + "&userId=" + user.getId()
+                + "&userId=" + userId
                 + "&flightId=" + request.flightId()
                 + "&currency=" + request.currency());
         return new RedirectResponse(redirectUrl, sessionId);
@@ -58,7 +58,7 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
     @Override
     @Transactional
     public WorkflowResult completeExternalBooking(ExternalBookingCallbackRequest request) {
-        User user = userRepository.findById(request.userId())
+        XmlAccount user = xmlUserStore.findById(request.userId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + request.userId()));
         Flight flight = flightSyncService.refreshFlightForPurchase(request.flightId());
 
@@ -77,7 +77,7 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
 
         String externalLink = purchaseUtil.buildAirlineRedirectUrl(flight, "externalBookingId=" + request.externalBookingId());
         Order order = Order.builder()
-                .user(user)
+                .userId(user.id())
                 .createdAt(LocalDateTime.now())
                 .totalPrice(expectedPrice)
                 .currency(request.currency())

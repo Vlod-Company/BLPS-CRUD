@@ -4,9 +4,6 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,14 +49,20 @@ public class XmlUserStore {
         lock.writeLock().lock();
         try {
             Path path = resolvePath();
-            if (Files.exists(path)) {
+            if (!Files.exists(path)) {
+                Path parent = path.getParent();
+                if (parent != null) {
+                    Files.createDirectories(parent);
+                }
+                writeAccounts(path, List.of(new XmlAccount(1L, "admin", passwordEncoder.encode("admin"), "ROLE_ADMIN", "Administrator")));
                 return;
             }
-            Path parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
+
+            List<XmlAccount> existingAccounts = readAccounts(path);
+            List<XmlAccount> normalizedAccounts = normalizeAccounts(existingAccounts);
+            if (!normalizedAccounts.equals(existingAccounts)) {
+                writeAccounts(path, normalizedAccounts);
             }
-            writeAccounts(path, List.of(new XmlAccount("admin", passwordEncoder.encode("admin"), "ROLE_ADMIN")));
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to initialize XML user store", ex);
         } finally {
@@ -78,21 +81,38 @@ public class XmlUserStore {
         }
     }
 
+    public Optional<XmlAccount> findById(Long id) {
+        lock.readLock().lock();
+        try {
+            return readAccounts(resolvePath()).stream()
+                    .filter(account -> account.id().equals(id))
+                    .findFirst();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     public boolean existsByLogin(String login) {
         return findByLogin(login).isPresent();
     }
 
-    public void createUser(String login, String passwordHash, String role) {
+    public XmlAccount createUser(String login, String passwordHash, String role, String fullName) {
         lock.writeLock().lock();
         try {
             Path path = resolvePath();
-            List<XmlAccount> accounts = new ArrayList<>(readAccounts(path));
+            List<XmlAccount> accounts = normalizeAccounts(new ArrayList<>(readAccounts(path)));
             if (accounts.stream().anyMatch(account -> account.login().equals(login))) {
                 throw new IllegalArgumentException("Login is already taken");
             }
-            accounts.add(new XmlAccount(login, passwordHash, role));
-            accounts.sort(Comparator.comparing(XmlAccount::login));
+            long nextId = accounts.stream()
+                    .map(XmlAccount::id)
+                    .max(Long::compareTo)
+                    .orElse(0L) + 1;
+            XmlAccount account = new XmlAccount(nextId, login, passwordHash, role, fullName);
+            accounts.add(account);
+            accounts.sort(Comparator.comparing(XmlAccount::id));
             writeAccounts(path, accounts);
+            return account;
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to persist user credentials", ex);
         } finally {
@@ -124,9 +144,11 @@ public class XmlUserStore {
                 for (int i = 0; i < nodes.getLength(); i++) {
                     Element element = (Element) nodes.item(i);
                     accounts.add(new XmlAccount(
+                            parseId(element.getAttribute("id")),
                             element.getAttribute("login"),
                             element.getAttribute("passwordHash"),
-                            element.getAttribute("role")
+                            element.getAttribute("role"),
+                            parseFullName(element.getAttribute("fullName"), element.getAttribute("login"))
                     ));
                 }
                 return accounts;
@@ -134,6 +156,29 @@ public class XmlUserStore {
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to read XML user store", ex);
         }
+    }
+
+    private List<XmlAccount> normalizeAccounts(List<XmlAccount> accounts) {
+        List<XmlAccount> normalized = new ArrayList<>(accounts.size());
+        long nextId = 1L;
+        for (XmlAccount account : accounts.stream().sorted(Comparator.comparing(XmlAccount::login)).toList()) {
+            Long accountId = account.id() == null ? nextId : account.id();
+            nextId = Math.max(nextId, accountId + 1);
+            String fullName = account.fullName() == null || account.fullName().isBlank() ? account.login() : account.fullName();
+            normalized.add(new XmlAccount(accountId, account.login(), account.passwordHash(), account.role(), fullName));
+        }
+        return normalized;
+    }
+
+    private Long parseId(String rawId) {
+        if (rawId == null || rawId.isBlank()) {
+            return null;
+        }
+        return Long.parseLong(rawId);
+    }
+
+    private String parseFullName(String fullName, String login) {
+        return fullName == null || fullName.isBlank() ? login : fullName;
     }
 
     private void writeAccounts(Path path, List<XmlAccount> accounts) throws IOException {
@@ -152,27 +197,26 @@ public class XmlUserStore {
 
             for (XmlAccount account : accounts) {
                 Element accountElement = document.createElement(ACCOUNT_TAG);
+                accountElement.setAttribute("id", String.valueOf(account.id()));
                 accountElement.setAttribute("login", account.login());
                 accountElement.setAttribute("passwordHash", account.passwordHash());
                 accountElement.setAttribute("role", account.role());
+                accountElement.setAttribute("fullName", account.fullName());
                 root.appendChild(accountElement);
             }
 
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty(OutputKeys.ENCODING, StandardCharsets.UTF_8.name());
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 
-            try (FileChannel channel = FileChannel.open(
+            try (OutputStream outputStream = Files.newOutputStream(
                     tempFile,
                     StandardOpenOption.WRITE,
                     StandardOpenOption.TRUNCATE_EXISTING
             )) {
-                try (OutputStream outputStream = Channels.newOutputStream(channel)) {
-                    transformer.transform(new DOMSource(document), new StreamResult(outputStream));
-                    outputStream.flush();
-                }
-                channel.force(true);
+                transformer.transform(new DOMSource(document), new StreamResult(outputStream));
+                outputStream.flush();
             }
 
             try {
@@ -183,7 +227,8 @@ public class XmlUserStore {
         } catch (Exception ex) {
             try {
                 Files.deleteIfExists(tempFile);
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
             if (ex instanceof IOException ioException) {
                 throw ioException;
             }

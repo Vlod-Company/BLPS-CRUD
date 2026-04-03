@@ -5,6 +5,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.jaas.AuthorityGranter;
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider;
@@ -66,7 +67,11 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers("/api/payments/**", "/api/booking/external/callback").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/flights", "/api/flights/**").permitAll()
+                        .requestMatchers(
+                                "/api/internal-purchases/callback",
+                                "/api/external-purchases/callback"
+                        ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 );
         return http.build();

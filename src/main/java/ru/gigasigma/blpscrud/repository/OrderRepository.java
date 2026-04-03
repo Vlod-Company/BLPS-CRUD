@@ -8,7 +8,6 @@ import ru.gigasigma.blpscrud.enums.OrderStatus;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByUserId(Long userId);
-    List<Order> findAllByUserLogin(String login);
     List<Order> findAllByStatus(OrderStatus status);
-    Optional<Order> findByIdAndUserLogin(Long id, String login);
+    Optional<Order> findByIdAndUserId(Long id, Long userId);
 }

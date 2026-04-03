@@ -8,7 +8,8 @@ import ru.gigasigma.blpscrud.entity.Ticket;
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findAllByOrderId(Long orderId);
     List<Ticket> findAllByFlightId(Long flightId);
+    List<Ticket> findAllByOrderUserId(Long userId);
     boolean existsByFlightIdAndSeatNumber(Long flightId, String seatNumber);
     Optional<Ticket> findFirstByOrderId(Long orderId);
-    Optional<Ticket> findByIdAndOrderUserLogin(Long id, String login);
+    Optional<Ticket> findByIdAndOrderUserId(Long id, Long userId);
 }

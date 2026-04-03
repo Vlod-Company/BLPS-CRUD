@@ -29,7 +29,7 @@ public record OrderResponse(
     public static OrderResponse fromEntity(Order order) {
         return new OrderResponse(
                 order.getId(),
-                order.getUser().getId(),
+                order.getUserId(),
                 order.getCreatedAt(),
                 order.getTotalPrice(),
                 order.getCurrency(),

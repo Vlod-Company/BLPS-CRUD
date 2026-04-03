@@ -1,7 +1,7 @@
 package ru.gigasigma.blpscrud.controller.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ru.gigasigma.blpscrud.entity.User;
+import ru.gigasigma.blpscrud.security.XmlAccount;
 
 @Schema(name = "RegisterResponse", description = "Newly created user summary")
 public record RegisterResponse(
@@ -14,7 +14,7 @@ public record RegisterResponse(
         @Schema(description = "Assigned security role", example = "ROLE_USER")
         String role
 ) {
-    public static RegisterResponse fromEntity(User user) {
-        return new RegisterResponse(user.getId(), user.getLogin(), "ROLE_USER");
+    public static RegisterResponse fromAccount(XmlAccount account) {
+        return new RegisterResponse(account.id(), account.login(), account.role());
     }
 }

@@ -5,23 +5,26 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import ru.gigasigma.blpscrud.entity.User;
-import ru.gigasigma.blpscrud.repository.UserRepository;
+import ru.gigasigma.blpscrud.security.XmlAccount;
+import ru.gigasigma.blpscrud.security.XmlUserStore;
 
 @Service
 @RequiredArgsConstructor
 public class CurrentUserService {
 
-    private final UserRepository userRepository;
+    private final XmlUserStore xmlUserStore;
 
     public String getCurrentLogin() {
-        Authentication authentication = getAuthentication();
-        return authentication.getName();
+        return getAuthentication().getName();
     }
 
-    public User getCurrentUser() {
+    public Long getCurrentUserId() {
+        return getCurrentAccount().id();
+    }
+
+    public XmlAccount getCurrentAccount() {
         String login = getCurrentLogin();
-        return userRepository.findByLogin(login)
+        return xmlUserStore.findByLogin(login)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found for login: " + login));
     }
 

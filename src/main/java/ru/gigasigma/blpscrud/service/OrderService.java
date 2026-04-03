@@ -7,19 +7,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.gigasigma.blpscrud.controller.dto.response.OrderResponse;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
+import ru.gigasigma.blpscrud.controller.dto.response.OrderResponse;
+import ru.gigasigma.blpscrud.controller.dto.response.TicketResponse;
 import ru.gigasigma.blpscrud.entity.Flight;
 import ru.gigasigma.blpscrud.entity.Order;
 import ru.gigasigma.blpscrud.entity.Ticket;
-import ru.gigasigma.blpscrud.entity.User;
 import ru.gigasigma.blpscrud.enums.OrderStatus;
 import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.repository.FlightRepository;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.repository.TicketRepository;
-import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
+import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
 
 @Service
@@ -34,7 +34,7 @@ public class OrderService {
     private final PurchaseUtil purchaseUtil;
     private final CurrentUserService currentUserService;
 
-    public Order createOrderWithTicket(StartPurchaseRequest request, User user, PaymentMethod paymentMethod, String externalLink) {
+    public Order createOrderWithTicket(StartPurchaseRequest request, Long userId, PaymentMethod paymentMethod, String externalLink) {
         Flight flight = flightSyncService.refreshFlightForPurchase(request.flightId());
 
         if (flight.getAvailableSeats() <= 0) {
@@ -45,7 +45,7 @@ public class OrderService {
         }
 
         Order order = Order.builder()
-                .user(user)
+                .userId(userId)
                 .createdAt(LocalDateTime.now())
                 .totalPrice(ticketPricingService.calculateTotalPrice(
                         flight.getBasePrice(),
@@ -86,10 +86,10 @@ public class OrderService {
         if (currentUserService.isAdmin()) {
             return getOrder(orderId);
         }
-        String login = currentUserService.getCurrentLogin();
-        return orderRepository.findByIdAndUserLogin(orderId, login)
+        Long userId = currentUserService.getCurrentUserId();
+        return orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseGet(() -> {
-                    Order order = getOrder(orderId);
+                    getOrder(orderId);
                     throw new AccessDeniedException("You do not have access to this order");
                 });
     }
@@ -99,6 +99,21 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found for order: " + orderId));
     }
 
+    public Ticket getAccessibleTicket(Long ticketId) {
+        if (currentUserService.isAdmin()) {
+            return ticketRepository.findById(ticketId)
+                    .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + ticketId));
+        }
+        Long userId = currentUserService.getCurrentUserId();
+        return ticketRepository.findByIdAndOrderUserId(ticketId, userId)
+                .orElseGet(() -> {
+                    if (ticketRepository.existsById(ticketId)) {
+                        throw new AccessDeniedException("You do not have access to this ticket");
+                    }
+                    throw new EntityNotFoundException("Ticket not found: " + ticketId);
+                });
+    }
+
     public void assertPending(Order order) {
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Order is not in PENDING status");
@@ -106,10 +121,18 @@ public class OrderService {
     }
 
     public List<OrderResponse> findCurrentUserOrders() {
-        String login = currentUserService.getCurrentLogin();
-        return orderRepository.findAllByUserLogin(login)
+        Long userId = currentUserService.getCurrentUserId();
+        return orderRepository.findAllByUserId(userId)
                 .stream()
                 .map(OrderResponse::fromEntity)
+                .toList();
+    }
+
+    public List<TicketResponse> findCurrentUserTickets() {
+        Long userId = currentUserService.getCurrentUserId();
+        return ticketRepository.findAllByOrderUserId(userId)
+                .stream()
+                .map(TicketResponse::fromEntity)
                 .toList();
     }
 

@@ -1,26 +1,24 @@
 package ru.gigasigma.blpscrud.service.internalPurchase.impl;
 
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.gigasigma.blpscrud.controller.dto.request.PaymentCallbackRequest;
-import ru.gigasigma.blpscrud.controller.dto.response.PaymentRedirectResponse;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
+import ru.gigasigma.blpscrud.controller.dto.response.PaymentRedirectResponse;
 import ru.gigasigma.blpscrud.entity.Order;
 import ru.gigasigma.blpscrud.entity.Ticket;
-import ru.gigasigma.blpscrud.entity.User;
 import ru.gigasigma.blpscrud.enums.OrderStatus;
 import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
-import ru.gigasigma.blpscrud.service.externalAirlineLogic.AirlineBookingService;
 import ru.gigasigma.blpscrud.service.CurrentUserService;
 import ru.gigasigma.blpscrud.service.OrderService;
+import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
+import ru.gigasigma.blpscrud.service.externalAirlineLogic.AirlineBookingService;
 import ru.gigasigma.blpscrud.service.internalPurchase.InternalPurchaseService;
 import ru.gigasigma.blpscrud.service.ticketDelivery.TicketDeliveryService;
-import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +34,8 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
     @Override
     @Transactional
     public PaymentRedirectResponse startInternalPurchase(StartPurchaseRequest request) {
-        User user = currentUserService.getCurrentUser();
-        Order order = orderService.createOrderWithTicket(request, user, PaymentMethod.INTERNAL, null);
+        Long userId = currentUserService.getCurrentUserId();
+        Order order = orderService.createOrderWithTicket(request, userId, PaymentMethod.INTERNAL, null);
         PaymentRedirectResponse redirect = generatePaymentRedirectLink(order.getId());
 
         if (redirect == null || redirect.redirectUrl() == null || redirect.redirectUrl().isBlank()) {
@@ -65,7 +63,7 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
         if (order.getStatus() == OrderStatus.PAID) {
             return purchaseUtil.toResult(order, "Order already paid");
         }
-        orderService.assertPending(order); //sus
+        orderService.assertPending(order);
         if (request.paidAmount() != null && request.paidAmount().compareTo(order.getTotalPrice()) < 0) {
             throw new IllegalStateException("Paid amount is less than order total");
         }
