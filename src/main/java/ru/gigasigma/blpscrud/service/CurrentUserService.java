@@ -1,6 +1,7 @@
 package ru.gigasigma.blpscrud.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,6 +11,7 @@ import ru.gigasigma.blpscrud.security.XmlUserStore;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CurrentUserService {
 
     private final XmlUserStore xmlUserStore;
@@ -24,13 +26,17 @@ public class CurrentUserService {
 
     public XmlAccount getCurrentAccount() {
         String login = getCurrentLogin();
-        return xmlUserStore.findByLogin(login)
+        XmlAccount account = xmlUserStore.findByLogin(login)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found for login: " + login));
+        log.debug("Resolved current XML account. id={}, login={}, role={}", account.id(), account.login(), account.role());
+        return account;
     }
 
     public boolean isAdmin() {
-        return getAuthentication().getAuthorities().stream()
+        boolean isAdmin = getAuthentication().getAuthorities().stream()
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        log.debug("Current principal admin check. login={}, isAdmin={}", getCurrentLogin(), isAdmin);
+        return isAdmin;
     }
 
     private Authentication getAuthentication() {

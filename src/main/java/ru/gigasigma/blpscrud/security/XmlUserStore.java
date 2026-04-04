@@ -23,6 +23,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,7 @@ import org.w3c.dom.NodeList;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class XmlUserStore {
 
     private static final String ROOT_TAG = "accounts";
@@ -49,12 +51,14 @@ public class XmlUserStore {
         lock.writeLock().lock();
         try {
             Path path = resolvePath();
+            log.info("Initializing XML user store at {}", path);
             if (!Files.exists(path)) {
                 Path parent = path.getParent();
                 if (parent != null) {
                     Files.createDirectories(parent);
                 }
                 writeAccounts(path, List.of(new XmlAccount(1L, "admin", passwordEncoder.encode("admin"), "ROLE_ADMIN", "Administrator")));
+                log.info("Created initial XML user store with default admin account");
                 return;
             }
 
@@ -62,8 +66,12 @@ public class XmlUserStore {
             List<XmlAccount> normalizedAccounts = normalizeAccounts(existingAccounts);
             if (!normalizedAccounts.equals(existingAccounts)) {
                 writeAccounts(path, normalizedAccounts);
+                log.info("Migrated XML user store format. accounts={}", normalizedAccounts.size());
+            } else {
+                log.info("XML user store loaded. accounts={}", existingAccounts.size());
             }
         } catch (IOException ex) {
+            log.error("Failed to initialize XML user store", ex);
             throw new IllegalStateException("Failed to initialize XML user store", ex);
         } finally {
             lock.writeLock().unlock();
@@ -112,8 +120,10 @@ public class XmlUserStore {
             accounts.add(account);
             accounts.sort(Comparator.comparing(XmlAccount::id));
             writeAccounts(path, accounts);
+            log.info("Created XML user account. id={}, login={}, role={}", account.id(), account.login(), account.role());
             return account;
         } catch (IOException ex) {
+            log.error("Failed to persist XML user account. login={}", login, ex);
             throw new IllegalStateException("Failed to persist user credentials", ex);
         } finally {
             lock.writeLock().unlock();
@@ -154,6 +164,7 @@ public class XmlUserStore {
                 return accounts;
             }
         } catch (Exception ex) {
+            log.error("Failed to read XML user store from {}", path, ex);
             throw new IllegalStateException("Failed to read XML user store", ex);
         }
     }

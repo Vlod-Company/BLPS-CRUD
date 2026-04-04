@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +30,7 @@ import ru.gigasigma.blpscrud.service.FlightService;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Flights")
+@Slf4j
 public class FlightController {
 
     private final FlightService flightService;
@@ -49,7 +51,8 @@ public class FlightController {
             @Parameter(description = "Number of passengers", example = "2")
             @RequestParam(name = "passengers", defaultValue = "1") @Positive(message = "passengers must be greater than 0") Integer passengers
     ) {
-        return flightService.search(
+        log.info("Flight search request. from={}, to={}, date={}, passengers={}", from, to, date, passengers);
+        List<FlightResponse> result = flightService.search(
                         from,
                         to,
                         date.atStartOfDay(),
@@ -59,6 +62,8 @@ public class FlightController {
                 .stream()
                 .map(FlightResponse::fromEntity)
                 .toList();
+        log.info("Flight search completed. from={}, to={}, count={}", from, to, result.size());
+        return result;
     }
 
     @GetMapping("/{id}")
@@ -72,6 +77,9 @@ public class FlightController {
             @Parameter(description = "Flight identifier", example = "105", required = true)
             @PathVariable @Positive(message = "id must be a positive number") Long id
     ) {
-        return FlightResponse.fromEntity(flightService.getById(id));
+        log.info("Flight getById request. id={}", id);
+        FlightResponse response = FlightResponse.fromEntity(flightService.getById(id));
+        log.info("Flight getById completed. id={}", id);
+        return response;
     }
 }
