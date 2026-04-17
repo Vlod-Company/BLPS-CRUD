@@ -3,6 +3,9 @@ package ru.gigasigma.blpscrud.config;
 import java.util.Map;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,12 +20,19 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFilter;
+import ru.gigasigma.blpscrud.filter.IpWhiteListFilter;
 import ru.gigasigma.blpscrud.security.RoleAuthorityGranter;
 import ru.gigasigma.blpscrud.security.XmlUserLoginModule;
 import ru.gigasigma.blpscrud.security.XmlUserStore;
+import ru.gigasigma.blpscrud.service.CIDRService;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    @Value("{proxy.ip:127.127.127.127}")
+    private String proxyIp;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -54,13 +64,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider, CIDRService cidrService) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
+                .addFilterBefore(new IpWhiteListFilter(proxyIp, cidrService), AuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/register",
