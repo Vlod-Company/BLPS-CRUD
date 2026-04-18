@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.jaas.AuthorityGranter;
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
 import ru.gigasigma.blpscrud.filter.IpWhiteListFilter;
+import ru.gigasigma.blpscrud.filter.JwtAuthenticationFilter;
 import ru.gigasigma.blpscrud.security.RoleAuthorityGranter;
 import ru.gigasigma.blpscrud.security.XmlUserLoginModule;
 import ru.gigasigma.blpscrud.security.XmlUserStore;
@@ -31,8 +34,7 @@ import ru.gigasigma.blpscrud.service.CIDRService;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("{proxy.ip:127.127.127.127}")
-    private String proxyIp;
+    private final JwtAuthenticationFilter jwtFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -64,14 +66,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider, CIDRService cidrService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider jaasAuthenticationProvider, CIDRService cidrService) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(new IpWhiteListFilter(proxyIp, cidrService), AuthenticationFilter.class)
+                .authenticationProvider(jaasAuthenticationProvider)
+                .addFilterBefore(new IpWhiteListFilter(cidrService), AuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, IpWhiteListFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/register",
@@ -85,7 +88,19 @@ public class SecurityConfig {
                                 "/api/internal-purchases/callback",
                                 "/api/external-purchases/callback"
                         ).hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().hasRole("USER")
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + authException.getMessage() + "\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"" + accessDeniedException.getMessage() + "\"}");
+                        })
                 );
         return http.build();
     }

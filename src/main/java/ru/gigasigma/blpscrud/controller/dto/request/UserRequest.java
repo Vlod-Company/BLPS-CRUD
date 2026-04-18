@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-@Schema(name = "RegisterRequest", description = "Payload for registering a new application user")
-public record RegisterRequest(
+@Schema(name = "UserRequest", description = "Payload for registering a new application user")
+public record UserRequest(
         @Schema(description = "Unique login", example = "ivan1")
         @NotBlank(message = "login is required")
         @Size(min = 4, message = "login length must be at least 4")

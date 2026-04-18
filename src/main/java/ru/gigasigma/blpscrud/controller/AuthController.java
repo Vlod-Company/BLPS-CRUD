@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.gigasigma.blpscrud.controller.dto.request.RegisterRequest;
+import ru.gigasigma.blpscrud.controller.dto.request.UserRequest;
 import ru.gigasigma.blpscrud.controller.dto.response.RegisterResponse;
 import ru.gigasigma.blpscrud.security.XmlAccount;
 import ru.gigasigma.blpscrud.service.AuthRegistrationService;
@@ -34,7 +34,7 @@ public class AuthController {
             @ApiResponse(responseCode = "201", description = "User registered", content = @Content(schema = @Schema(implementation = RegisterResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid registration payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
     })
-    public RegisterResponse register(@RequestBody @Valid RegisterRequest request) {
+    public RegisterResponse register(@RequestBody @Valid UserRequest request) {
         XmlAccount account = authRegistrationService.register(request.login(), request.password());
         return RegisterResponse.fromAccount(account);
     }

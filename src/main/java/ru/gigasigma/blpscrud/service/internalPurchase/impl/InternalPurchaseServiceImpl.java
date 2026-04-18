@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 import ru.gigasigma.blpscrud.controller.dto.request.PaymentCallbackRequest;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
@@ -42,6 +43,9 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
         () -> {
             Long userId = currentUserService.getCurrentUserId();
             Order order = orderService.createOrderWithTicket(request, userId, PaymentMethod.INTERNAL, null);
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ignored) {}
             PaymentRedirectResponse redirect = generatePaymentRedirectLink(order.getId());
 
             if (redirect == null || redirect.redirectUrl() == null || redirect.redirectUrl().isBlank()) {

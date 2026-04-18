@@ -15,11 +15,13 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.gigasigma.blpscrud.controller.dto.response.OrderResponse;
 import ru.gigasigma.blpscrud.controller.dto.response.TicketResponse;
 import ru.gigasigma.blpscrud.entity.Ticket;
 import ru.gigasigma.blpscrud.service.OrderService;
@@ -42,6 +44,16 @@ public class TicketController {
     })
     public List<TicketResponse> myTickets() {
         return orderService.findCurrentUserTickets();
+    }
+
+    @GetMapping
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order found", content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<TicketResponse> findAll() {
+        return orderService.findAllTickets();
     }
 
     @GetMapping("/{id}")

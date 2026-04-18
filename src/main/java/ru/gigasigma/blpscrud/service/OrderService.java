@@ -6,7 +6,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.controller.dto.response.OrderResponse;
 import ru.gigasigma.blpscrud.controller.dto.response.TicketResponse;
@@ -20,6 +21,7 @@ import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.repository.TicketRepository;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
+import ru.gigasigma.blpscrud.transaction.ProgrammaticTransaction;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
 
 @Service
@@ -33,6 +35,7 @@ public class OrderService {
     private final FlightRepository flightRepository;
     private final PurchaseUtil purchaseUtil;
     private final CurrentUserService currentUserService;
+    private final PlatformTransactionManager txManager;
 
     public Order createOrderWithTicket(StartPurchaseRequest request, Long userId, PaymentMethod paymentMethod, String externalLink) {
         Flight flight = flightSyncService.refreshFlightForPurchase(request.flightId());
@@ -128,6 +131,20 @@ public class OrderService {
                 .toList();
     }
 
+    public List<OrderResponse> findAllOrders() {
+        return orderRepository.findAll()
+                .stream()
+                .map(OrderResponse::fromEntity)
+                .toList();
+    }
+
+    public List<TicketResponse> findAllTickets() {
+        return ticketRepository.findAll()
+                .stream()
+                .map(TicketResponse::fromEntity)
+                .toList();
+    }
+
     public List<TicketResponse> findCurrentUserTickets() {
         Long userId = currentUserService.getCurrentUserId();
         return ticketRepository.findAllByOrderUserId(userId)
@@ -141,22 +158,24 @@ public class OrderService {
         return cancelOrder(order.getId());
     }
 
-    @Transactional
     public WorkflowResult cancelOrder(Long orderId) {
-        Order order = getOrder(orderId);
-        if (order.getStatus() == OrderStatus.PAID) {
-            throw new IllegalStateException("Paid order cannot be canceled in this step");
-        }
-        if (order.getStatus() == OrderStatus.CANCELED) {
-            return purchaseUtil.toResult(order, "Order is already canceled");
-        }
+        return ProgrammaticTransaction.defaultTransaction(txManager, TransactionDefinition.withDefaults(),
+        () -> {
+            Order order = getOrder(orderId);
+            if (order.getStatus() == OrderStatus.PAID) {
+                throw new IllegalStateException("Paid order cannot be canceled in this step");
+            }
+            if (order.getStatus() == OrderStatus.CANCELED) {
+                return purchaseUtil.toResult(order, "Order is already canceled");
+            }
 
-        Ticket ticket = getOrderTicket(orderId);
-        Flight flight = ticket.getFlight();
-        flight.setAvailableSeats(flight.getAvailableSeats() + 1);
-        flightRepository.save(flight);
-        order.setStatus(OrderStatus.CANCELED);
-        Order saved = orderRepository.save(order);
-        return purchaseUtil.toResult(saved, "Order canceled");
+            Ticket ticket = getOrderTicket(orderId);
+            Flight flight = ticket.getFlight();
+            flight.setAvailableSeats(flight.getAvailableSeats() + 1);
+            flightRepository.save(flight);
+            order.setStatus(OrderStatus.CANCELED);
+            Order saved = orderRepository.save(order);
+            return purchaseUtil.toResult(saved, "Order canceled");
+        });
     }
 }

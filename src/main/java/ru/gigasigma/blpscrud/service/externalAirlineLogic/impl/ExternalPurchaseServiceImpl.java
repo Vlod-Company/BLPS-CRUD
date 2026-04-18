@@ -60,7 +60,6 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
     }
 
     @Override
-    @Transactional
     public WorkflowResult completeExternalBooking(ExternalBookingCallbackRequest request) {
         return ProgrammaticTransaction.defaultTransaction(txManager, TransactionDefinition.withDefaults(),
         () -> {

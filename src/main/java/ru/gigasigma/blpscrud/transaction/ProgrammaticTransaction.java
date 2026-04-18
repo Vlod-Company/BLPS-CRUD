@@ -1,6 +1,5 @@
 package ru.gigasigma.blpscrud.transaction;
 
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
@@ -39,6 +38,7 @@ public interface ProgrammaticTransaction<T> {
                 return data;
             } catch (Exception e) {
                 rollbackLogic.rollback(status, e);
+                txManager.rollback(status);
                 throw e;
             }
         };
@@ -64,7 +64,6 @@ public interface ProgrammaticTransaction<T> {
     }
 
     static void rollbackWithLogs(TransactionStatus status, Exception e) {
-        var log = LoggerFactory.getLogger(ProgrammaticTransaction.class);
-        log.error("Transaction failed, rolling back. Reason: {}", e.getMessage(), e);
+
     }
 }

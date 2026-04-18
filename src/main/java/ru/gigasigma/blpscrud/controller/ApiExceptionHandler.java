@@ -7,6 +7,9 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.hibernate.AssertionFailure;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -129,6 +132,17 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiErrorResponse.of(
                 HttpStatus.FORBIDDEN.value(),
                 "Access denied",
+                "",
+                request.getRequestURI(),
+                List.of()
+        ));
+    }
+
+    @ExceptionHandler(CannotAcquireLockException.class)
+    public ResponseEntity<ApiErrorResponse> handleCannotAcquireLock(CannotAcquireLockException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiErrorResponse.of(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
                 ex.getMessage(),
                 request.getRequestURI(),
                 List.of()
@@ -156,16 +170,27 @@ public class ApiExceptionHandler {
         );
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiErrorResponse.of(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal server error",
-                "Unexpected error occurred. Please try again later",
+    @ExceptionHandler(AssertionFailure.class)
+    public ResponseEntity<ApiErrorResponse> handleAssertionFaileru(Exception ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "Duplicate seat number in db",
+                "",
                 request.getRequestURI(),
                 List.of()
         ));
     }
+
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiErrorResponse.of(
+//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                "Internal server error",
+//                "Unexpected error occurred. Please try again later",
+//                request.getRequestURI(),
+//                List.of()
+//        ));
+//    }
 
     private ResponseEntity<ApiErrorResponse> badRequest(
             String error,

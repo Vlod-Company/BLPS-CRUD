@@ -23,31 +23,30 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class IpWhiteListFilter extends OncePerRequestFilter {
-    private final String proxyIp;
-
     private final CIDRService cidrService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String ipAddress = request.getRemoteAddr();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!(auth instanceof UsernamePasswordAuthenticationToken)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        String ipAddress = request.getHeader("X-Forwarded-For");
 
-        if (ipAddress.equals(proxyIp)) {
-            if (request.getHeader("X-Forwarded-For") == null) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-            ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null) {
+            ipAddress = request.getRemoteAddr();
         }
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Collection<? extends GrantedAuthority> rolesList = auth.getAuthorities();
+        Collection<? extends GrantedAuthority> roles = auth.getAuthorities();
 
-        List<String> rolesStrings = rolesList.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
-        List<String> newRoles = cidrService.getValidRole(ipAddress, rolesStrings);
+        List<String> rolesStrings = roles.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+        cidrService.getValidRole(ipAddress, rolesStrings);
 
-        log.info("For ip: {} got: {} and granted roles: {}", ipAddress, rolesStrings, newRoles);
+        log.info("For ip: {} got: {} and granted roles", ipAddress, rolesStrings);
 
-        List<SimpleGrantedAuthority> authorities = newRoles.stream().map(SimpleGrantedAuthority::new).toList();
+        List<SimpleGrantedAuthority> authorities = rolesStrings.stream().map(SimpleGrantedAuthority::new).toList();
         Authentication newAuth = new UsernamePasswordAuthenticationToken(auth.getPrincipal(), auth.getCredentials(), authorities);
         SecurityContextHolder.getContext().setAuthentication(newAuth);
         filterChain.doFilter(request, response);
