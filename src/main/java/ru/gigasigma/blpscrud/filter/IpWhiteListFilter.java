@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -42,12 +41,14 @@ public class IpWhiteListFilter extends OncePerRequestFilter {
         Collection<? extends GrantedAuthority> roles = auth.getAuthorities();
 
         List<String> rolesStrings = roles.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
-        cidrService.getValidRole(ipAddress, rolesStrings);
+        List<String> grantedRoles = cidrService.getValidRole(ipAddress, rolesStrings);
 
-        log.info("For ip: {} got: {} and granted roles", ipAddress, rolesStrings);
+        log.info("For ip: {} granted roles {}", ipAddress, grantedRoles);
 
-        List<SimpleGrantedAuthority> authorities = rolesStrings.stream().map(SimpleGrantedAuthority::new).toList();
-        Authentication newAuth = new UsernamePasswordAuthenticationToken(auth.getPrincipal(), auth.getCredentials(), authorities);
+        List<SimpleGrantedAuthority> authorities = grantedRoles.stream().map(SimpleGrantedAuthority::new).toList();
+        UsernamePasswordAuthenticationToken newAuth =
+                new UsernamePasswordAuthenticationToken(auth.getPrincipal(), auth.getCredentials(), authorities);
+        newAuth.setDetails(auth.getDetails());
         SecurityContextHolder.getContext().setAuthentication(newAuth);
         filterChain.doFilter(request, response);
     }
