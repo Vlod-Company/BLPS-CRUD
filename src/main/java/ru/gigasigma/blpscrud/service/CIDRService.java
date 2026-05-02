@@ -8,8 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.gigasigma.blpscrud.entity.NetworkPolitics;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -30,7 +32,7 @@ public class CIDRService {
             return List.of();
         }
 
-        List<String> grantedRoles = new ArrayList<>(roles);
+        Set<String> allowedRoles = new LinkedHashSet<>();
         List<String> matchedPolicies = new ArrayList<>();
 
         for (NetworkPolitics policy : networkPoliticsService.findAll()) {
@@ -39,10 +41,8 @@ public class CIDRService {
             }
 
             matchedPolicies.add(policy.getName());
-            grantedRoles.retainAll(policy.getRoles() != null ? policy.getRoles() : List.of());
-
-            if (grantedRoles.isEmpty()) {
-                break;
+            if (policy.getRoles() != null) {
+                allowedRoles.addAll(policy.getRoles());
             }
         }
 
@@ -50,6 +50,10 @@ public class CIDRService {
             log.info("No network policy matched ip '{}'; roles denied", normalizedIpAddress);
             return List.of();
         }
+
+        List<String> grantedRoles = roles.stream()
+                .filter(allowedRoles::contains)
+                .toList();
 
         log.info("Ip '{}' matched policies {} and resolved roles {}", normalizedIpAddress, matchedPolicies, grantedRoles);
         return grantedRoles;
