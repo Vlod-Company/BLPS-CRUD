@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.request.UserRequest;
+import ru.gigasigma.blpscrud.controller.dto.response.LoginResponse;
 import ru.gigasigma.blpscrud.controller.dto.response.RegisterResponse;
 import ru.gigasigma.blpscrud.security.XmlAccount;
-import ru.gigasigma.blpscrud.service.AuthRegistrationService;
+import ru.gigasigma.blpscrud.service.AuthService;
+import ru.gigasigma.blpscrud.service.JwtService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,7 +27,7 @@ import ru.gigasigma.blpscrud.service.AuthRegistrationService;
 @Tag(name = "Authentication")
 public class AuthController {
 
-    private final AuthRegistrationService authRegistrationService;
+    private final AuthService authService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -35,7 +37,12 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid registration payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
     })
     public RegisterResponse register(@RequestBody @Valid UserRequest request) {
-        XmlAccount account = authRegistrationService.register(request.login(), request.password());
+        XmlAccount account = authService.register(request.login(), request.password());
         return RegisterResponse.fromAccount(account);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody @Valid UserRequest request) {
+        return authService.login(request);
     }
 }

@@ -51,7 +51,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
                 throw new BadCredentialsException("Token expired due to policy update");
             }
 
-            return new JwtAuthenticationToken(userDetails, List.of(new SimpleGrantedAuthority(userDetails.get().role())), token);
+            return new JwtAuthenticationToken(userDetails.get().login(), List.of(new SimpleGrantedAuthority(userDetails.get().role())), token);
 
         } catch (Exception e) {
             throw new BadCredentialsException("JWT validation failed", e);

@@ -25,6 +25,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
 import ru.gigasigma.blpscrud.filter.IpWhiteListFilter;
 import ru.gigasigma.blpscrud.filter.JwtAuthenticationFilter;
+import ru.gigasigma.blpscrud.security.JwtAuthenticationProvider;
 import ru.gigasigma.blpscrud.security.RoleAuthorityGranter;
 import ru.gigasigma.blpscrud.security.XmlUserLoginModule;
 import ru.gigasigma.blpscrud.security.XmlUserStore;
@@ -33,8 +34,6 @@ import ru.gigasigma.blpscrud.service.CIDRService;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -66,7 +65,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider jaasAuthenticationProvider, CIDRService cidrService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider jaasAuthenticationProvider, JwtAuthenticationProvider jwtAuthenticationProvider, CIDRService cidrService) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -74,10 +73,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(jaasAuthenticationProvider)
                 .addFilterBefore(new IpWhiteListFilter(cidrService), AuthenticationFilter.class)
-                .addFilterBefore(jwtFilter, IpWhiteListFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtAuthenticationProvider), IpWhiteListFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/api/auth/register",
+                                "/api/auth/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"

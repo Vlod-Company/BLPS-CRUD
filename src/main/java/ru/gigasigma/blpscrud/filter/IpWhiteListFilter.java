@@ -12,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ru.gigasigma.blpscrud.security.JwtAuthenticationToken;
 import ru.gigasigma.blpscrud.service.CIDRService;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class IpWhiteListFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!(auth instanceof UsernamePasswordAuthenticationToken)) {
+        if (!(auth instanceof UsernamePasswordAuthenticationToken) && !(auth instanceof JwtAuthenticationToken)) {
             filterChain.doFilter(request, response);
             return;
         }

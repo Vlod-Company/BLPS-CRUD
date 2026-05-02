@@ -9,15 +9,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import ru.gigasigma.blpscrud.controller.dto.request.UserRequest;
 import ru.gigasigma.blpscrud.repository.NetworkPoliticsRepository;
 
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,23 +24,18 @@ public class JwtService {
 
     private final NetworkPoliticsRepository networkPoliticsRepository;
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111}")
     private String secretKey;
 
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
-    public String generateToken(Authentication authentication) {
+    public String generateToken(UserRequest userRequest) {
         LocalDateTime policyVersion = networkPoliticsRepository.findMaxUpdatedAt().get();
         long policyVersionEpoch = policyVersion.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        List<String> roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-
         return Jwts.builder()
-                .subject(authentication.getName())
-                .claim("roles", roles)
+                .subject(userRequest.login())
                 .claim("pol_ver", policyVersionEpoch)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
