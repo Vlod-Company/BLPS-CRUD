@@ -31,7 +31,10 @@ public class NetworkPoliticsService {
         politics.setId(null);
 
         if (politics.getAddresses() != null) {
-            politics.getAddresses().forEach(addr -> addr.setPolitics(null));
+            politics.getAddresses().forEach(addr -> {
+                addr.setPolitics(politics);
+                addr.setId(null);
+            });
         }
 
         return repository.save(politics);
