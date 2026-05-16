@@ -5,7 +5,6 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -87,7 +86,7 @@ public class SecurityConfig {
                                 "/api/internal-purchases/callback",
                                 "/api/external-purchases/callback"
                         ).hasRole("ADMIN")
-                        .anyRequest().hasRole("USER")
+                        .anyRequest().hasAnyRole("ADMIN", "USER")
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
