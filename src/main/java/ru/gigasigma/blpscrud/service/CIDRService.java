@@ -20,48 +20,57 @@ import java.util.Set;
 public class CIDRService {
 
     private final NetworkPoliticsService networkPoliticsService;
+    private final ClientIpResolver clientIpResolver;
 
-    public List<String> getValidRole(String ipAddress, List<String> roles) {
+    public List<String> getValidRoles(String ipAddress, List<String> roles) {
         if (roles == null || roles.isEmpty()) {
             return List.of();
         }
 
-        String normalizedIpAddress = normalizeIpAddress(ipAddress);
-        if (normalizedIpAddress == null) {
-            log.warn("Cannot resolve client IP from value '{}'", ipAddress);
+        List<MatchedPolicy> matchedPolicies = new ArrayList<>();
+        int maxMask = -1;
+
+        for (NetworkPolitics policy : networkPoliticsService.findAll()) {
+            Integer matchedMask = resolveMatchingMask(policy, ipAddress);
+            if (matchedMask == null) {
+                continue;
+            }
+
+            matchedPolicies.add(new MatchedPolicy(policy, matchedMask));
+            maxMask = Math.max(maxMask, matchedMask);
+        }
+
+        if (matchedPolicies.isEmpty()) {
+            log.info("No network policy matched ip '{}'; roles denied", ipAddress);
             return List.of();
         }
 
         Set<String> allowedRoles = new LinkedHashSet<>();
-        List<String> matchedPolicies = new ArrayList<>();
+        List<String> appliedPolicies = new ArrayList<>();
 
-        for (NetworkPolitics policy : networkPoliticsService.findAll()) {
-            if (!matchesPolicy(policy, normalizedIpAddress)) {
+        for (MatchedPolicy matchedPolicy : matchedPolicies) {
+            if (matchedPolicy.mask() != maxMask) {
                 continue;
             }
 
-            matchedPolicies.add(policy.getName());
+            NetworkPolitics policy = matchedPolicy.policy();
+            appliedPolicies.add(policy.getName());
             if (policy.getRoles() != null) {
                 allowedRoles.addAll(policy.getRoles());
             }
-        }
-
-        if (matchedPolicies.isEmpty()) {
-            log.info("No network policy matched ip '{}'; roles denied", normalizedIpAddress);
-            return List.of();
         }
 
         List<String> grantedRoles = roles.stream()
                 .filter(allowedRoles::contains)
                 .toList();
 
-        log.info("Ip '{}' matched policies {} and resolved roles {}", normalizedIpAddress, matchedPolicies, grantedRoles);
+        log.info("Ip '{}' matched policies {} on mask /{} and resolved roles {}", ipAddress, appliedPolicies, maxMask, grantedRoles);
         return grantedRoles;
     }
 
-    private boolean matchesPolicy(NetworkPolitics policy, String ipAddress) {
+    private Integer resolveMatchingMask(NetworkPolitics policy, String ipAddress) {
         if (policy.getAddresses() == null || policy.getAddresses().isEmpty()) {
-            return false;
+            return null;
         }
 
         return policy.getAddresses().stream()
@@ -69,30 +78,35 @@ public class CIDRService {
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(addr -> !addr.isEmpty())
-                .anyMatch(addr -> matchesAddress(addr, ipAddress, policy.getName()));
+                .map(addr -> resolveMaskIfMatches(addr, ipAddress, policy.getName()))
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(null);
     }
 
-    private boolean matchesAddress(String cidr, String ipAddress, String policyName) {
+    private Integer resolveMaskIfMatches(String cidr, String ipAddress, String policyName) {
         try {
-            return new IpAddressMatcher(cidr).matches(ipAddress);
+            if (!new IpAddressMatcher(cidr).matches(ipAddress)) {
+                return null;
+            }
+
+            int slashIndex = cidr.indexOf('/');
+            if (slashIndex < 0 || slashIndex == cidr.length() - 1) {
+                throw new IllegalArgumentException("CIDR mask is missing");
+            }
+
+            int mask = Integer.parseInt(cidr.substring(slashIndex + 1).trim());
+            if (mask < 0 || mask > 32) {
+                throw new IllegalArgumentException("CIDR mask is out of range");
+            }
+
+            return mask;
         } catch (IllegalArgumentException ex) {
             log.warn("Skipping invalid network address '{}' in policy '{}'", cidr, policyName);
-            return false;
+            return null;
         }
     }
 
-    private String normalizeIpAddress(String ipAddress) {
-        if (ipAddress == null) {
-            return null;
-        }
-
-        for (String candidate : ipAddress.split(",")) {
-            String normalized = candidate.trim();
-            if (!normalized.isEmpty()) {
-                return normalized;
-            }
-        }
-
-        return null;
+    private record MatchedPolicy(NetworkPolitics policy, int mask) {
     }
 }

@@ -29,6 +29,7 @@ import ru.gigasigma.blpscrud.security.RoleAuthorityGranter;
 import ru.gigasigma.blpscrud.security.XmlUserLoginModule;
 import ru.gigasigma.blpscrud.security.XmlUserStore;
 import ru.gigasigma.blpscrud.service.CIDRService;
+import ru.gigasigma.blpscrud.service.ClientIpResolver;
 
 @Configuration
 @RequiredArgsConstructor
@@ -64,15 +65,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider jaasAuthenticationProvider, JwtAuthenticationProvider jwtAuthenticationProvider, CIDRService cidrService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider jaasAuthenticationProvider, JwtAuthenticationProvider jwtAuthenticationProvider, CIDRService cidrService, ClientIpResolver clientIpResolver) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(jaasAuthenticationProvider)
-                .addFilterBefore(new IpWhiteListFilter(cidrService), AuthenticationFilter.class)
-                .addFilterBefore(new JwtAuthenticationFilter(jwtAuthenticationProvider), IpWhiteListFilter.class)
+                .addFilterBefore(new IpWhiteListFilter(cidrService, clientIpResolver), AuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtAuthenticationProvider, clientIpResolver), IpWhiteListFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/**",

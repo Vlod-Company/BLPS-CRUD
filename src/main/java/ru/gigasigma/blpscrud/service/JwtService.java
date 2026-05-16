@@ -16,6 +16,7 @@ import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -30,13 +31,16 @@ public class JwtService {
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
-    public String generateToken(UserRequest userRequest) {
-        LocalDateTime policyVersion = networkPoliticsRepository.findMaxUpdatedAt().get();
-        long policyVersionEpoch = policyVersion.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    public String generateToken(String login, String clientIp) {
+        long policyVersionEpoch = networkPoliticsRepository.findMaxUpdatedAt()
+                .map(this::toEpochMillis)
+                .orElse(0L);
 
         return Jwts.builder()
-                .subject(userRequest.login())
+                .subject(login)
                 .claim("pol_ver", policyVersionEpoch)
+                .claim("cip", clientIp)
+                .id(UUID.randomUUID().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSignInKey())
@@ -49,6 +53,14 @@ public class JwtService {
 
     public Long extractPolicyVersion(String token) {
         return extractClaim(token, claims -> claims.get("pol_ver", Long.class));
+    }
+
+    public String extractClientIp(String token) {
+        return extractClaim(token, claims -> claims.get("cip", String.class));
+    }
+
+    public String extractTokenId(String token) {
+        return extractClaim(token, Claims::getId);
     }
 
     public boolean isTokenValid(String token) {
@@ -79,5 +91,9 @@ public class JwtService {
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private long toEpochMillis(LocalDateTime value) {
+        return value.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 }

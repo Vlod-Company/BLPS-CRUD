@@ -35,7 +35,7 @@ public class AuthService {
         return account;
     }
 
-    public LoginResponse login(UserRequest user) {
+    public LoginResponse login(UserRequest user, String clientIp) {
         Optional<XmlAccount> xmlUser = xmlUserStore.findByLogin(user.login());
 
         if (xmlUser.isEmpty()) {
@@ -46,6 +46,6 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        return new LoginResponse(jwtService.generateToken(user));
+        return new LoginResponse(jwtService.generateToken(user.login(), clientIp));
     }
 }

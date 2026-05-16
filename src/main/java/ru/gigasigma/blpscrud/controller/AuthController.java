@@ -19,7 +19,8 @@ import ru.gigasigma.blpscrud.controller.dto.response.LoginResponse;
 import ru.gigasigma.blpscrud.controller.dto.response.RegisterResponse;
 import ru.gigasigma.blpscrud.security.XmlAccount;
 import ru.gigasigma.blpscrud.service.AuthService;
-import ru.gigasigma.blpscrud.service.JwtService;
+import ru.gigasigma.blpscrud.service.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,6 +29,7 @@ import ru.gigasigma.blpscrud.service.JwtService;
 public class AuthController {
 
     private final AuthService authService;
+    private final ClientIpResolver clientIpResolver;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -42,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody @Valid UserRequest request) {
-        return authService.login(request);
+    public LoginResponse login(@RequestBody @Valid UserRequest request, HttpServletRequest httpRequest) {
+        return authService.login(request, clientIpResolver.resolve(httpRequest));
     }
 }

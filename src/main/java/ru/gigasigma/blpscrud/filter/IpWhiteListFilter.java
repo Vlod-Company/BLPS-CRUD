@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ru.gigasigma.blpscrud.security.JwtAuthenticationToken;
 import ru.gigasigma.blpscrud.service.CIDRService;
+import ru.gigasigma.blpscrud.service.ClientIpResolver;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class IpWhiteListFilter extends OncePerRequestFilter {
     private final CIDRService cidrService;
+    private final ClientIpResolver clientIpResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -33,16 +35,12 @@ public class IpWhiteListFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        String ipAddress = request.getHeader("X-Forwarded-For");
-
-        if (ipAddress == null) {
-            ipAddress = request.getRemoteAddr();
-        }
+        String ipAddress = clientIpResolver.resolve(request);
 
         Collection<? extends GrantedAuthority> roles = auth.getAuthorities();
 
         List<String> rolesStrings = roles.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
-        List<String> grantedRoles = cidrService.getValidRole(ipAddress, rolesStrings);
+        List<String> grantedRoles = cidrService.getValidRoles(ipAddress, rolesStrings);
 
         log.info("For ip: {} granted roles {}", ipAddress, grantedRoles);
 

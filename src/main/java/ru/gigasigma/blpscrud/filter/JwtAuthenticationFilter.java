@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ru.gigasigma.blpscrud.security.JwtAuthenticationProvider;
 import ru.gigasigma.blpscrud.security.JwtAuthenticationToken;
+import ru.gigasigma.blpscrud.service.ClientIpResolver;
 
 import java.io.IOException;
 
@@ -16,6 +17,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtAuthenticationProvider authenticationManager;
+    private final ClientIpResolver clientIpResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -28,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = authHeader.substring(7);
 
             JwtAuthenticationToken authRequest = new JwtAuthenticationToken(jwt);
+            authRequest.setDetails(clientIpResolver.resolve(request));
 
             try {
                 var authentication = authenticationManager.authenticate(authRequest);
