@@ -19,11 +19,27 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
+  activemq:
+    image: rmohr/activemq:5.18.3
+    container_name: blps-activemq
+    restart: unless-stopped
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      ACTIVEMQ_ADMIN_LOGIN: admin
+      ACTIVEMQ_ADMIN_PASSWORD: admin
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/61616" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  lab:
     build:
       context: ./lab
       dockerfile: Dockerfile
-    container_name: blps-app
+    container_name: blps-lab
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -31,14 +47,36 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      activemq:
+        condition: service_started
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: web3_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: rewtqasw3253
+
+      ACTIVEMQ_BROKER_URL: tcp://activemq:61616
+      ACTIVEMQ_USER: admin
+      ACTIVEMQ_PASSWORD: admin
     volumes:
       - ./lab/security-users.xml:/opt/jboss/security-users.xml
+
+  paymentService:
+    build:
+      context: ./paymentService
+      dockerfile: Dockerfile
+    container_name: blps-payment-service
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    depends_on:
+      activemq:
+        condition: service_healthy
+    environment:
+      ACTIVEMQ_BROKER_URL: tcp://activemq:61616
+      ACTIVEMQ_USER: admin
+      ACTIVEMQ_PASSWORD: admin
 
 volumes:
   postgres_data:
