@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>Fake Payment</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<h1>Fake Payment Provider</h1>
+
+<p><b>Order:</b> <span th:text="${orderId}"></span></p>
+<p><b>Amount:</b> <span th:text="${amount}"></span></p>
+<p><b>Currency:</b> <span th:text="${currency}"></span></p>
+
+<form method="post" action="/pay">
+
+    <input type="hidden" name="session" th:value="${session}" />
+    <input type="hidden" name="orderId" th:value="${orderId}" />
+    <input type="hidden" name="amount" th:value="${amount}" />
+    <input type="hidden" name="currency" th:value="${currency}" />
+    <input type="hidden" name="replyTo" th:value="${replyTo}" />
+
+    <button type="submit">Pay</button>
+
+</form>
+
+</body>
+</html>
