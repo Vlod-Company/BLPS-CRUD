@@ -21,7 +21,7 @@ services:
 
   app:
     build:
-      context: .
+      context: ./lab
       dockerfile: Dockerfile
     container_name: blps-app
     restart: unless-stopped
@@ -38,7 +38,7 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: rewtqasw3253
     volumes:
-      - ./security-users.xml:/opt/jboss/security-users.xml
+      - ./lab/security-users.xml:/opt/jboss/security-users.xml
 
 volumes:
   postgres_data:
