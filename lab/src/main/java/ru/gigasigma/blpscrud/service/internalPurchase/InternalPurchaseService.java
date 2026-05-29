@@ -7,6 +7,6 @@ import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 
 public interface InternalPurchaseService {
     PaymentRedirectResponse startInternalPurchase(StartPurchaseRequest request);
-    WorkflowResult handlePaymentCallback(PaymentCallbackRequest request);
+    void handlePaymentCallback(PaymentCallbackRequest request);
     PaymentRedirectResponse generatePaymentRedirectLink(Long orderId);
 }

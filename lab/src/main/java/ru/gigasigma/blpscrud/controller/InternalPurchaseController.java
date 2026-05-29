@@ -44,15 +44,4 @@ public class InternalPurchaseController {
                 .location(URI.create(redirect.redirectUrl()))
                 .build();
     }
-
-    @PostMapping("/callback")
-    @Operation(summary = "Handle internal payment callback", description = "Applies the result of an internal payment callback to the order workflow.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Callback processed", content = @Content(schema = @Schema(implementation = WorkflowResult.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid callback payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Order not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
-    })
-    public WorkflowResult callback(@RequestBody @Valid PaymentCallbackRequest request) {
-        return internalPurchaseService.handlePaymentCallback(request);
-    }
 }

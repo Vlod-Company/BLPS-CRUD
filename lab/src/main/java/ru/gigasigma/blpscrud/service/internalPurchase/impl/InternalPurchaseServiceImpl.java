@@ -2,12 +2,12 @@ package ru.gigasigma.blpscrud.service.internalPurchase.impl;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import ru.gigasigma.blpscrud.controller.dto.request.PaymentCallbackRequest;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.controller.dto.response.PaymentRedirectResponse;
@@ -25,6 +25,7 @@ import ru.gigasigma.blpscrud.service.ticketDelivery.TicketDeliveryService;
 import ru.gigasigma.blpscrud.transaction.ProgrammaticTransaction;
 import ru.gigasigma.blpscrud.util.PurchaseUtil;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InternalPurchaseServiceImpl implements InternalPurchaseService {
@@ -36,6 +37,9 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
     private final PurchaseUtil purchaseUtil;
     private final CurrentUserService currentUserService;
     private final PlatformTransactionManager txManager;
+
+    @Value("${payment.provider-url:http://localhost:8085/pay}")
+    private String paymentProviderUrl;
 
     @Override
     public PaymentRedirectResponse startInternalPurchase(StartPurchaseRequest request) {
@@ -53,8 +57,8 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
     }
 
     @Override
-    public WorkflowResult handlePaymentCallback(PaymentCallbackRequest request) {
-        return ProgrammaticTransaction.defaultTransaction(txManager, TransactionDefinition.withDefaults(),
+    public void handlePaymentCallback(PaymentCallbackRequest request) {
+        ProgrammaticTransaction.defaultTransactionVoid(txManager, TransactionDefinition.withDefaults(),
         () -> {
             Order order = orderService.getOrder(request.orderId());
             if (order.getPaymentMethod() != PaymentMethod.INTERNAL) {
@@ -67,10 +71,11 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
                 String reason = request.failureReason() == null || request.failureReason().isBlank()
                         ? "Payment failed"
                         : request.failureReason();
-                return purchaseUtil.toResult(order, reason);
+                log.warn("Payment callback for order {} failed: {}", order.getId(), reason);
+                return;
             }
             if (order.getStatus() == OrderStatus.PAID) {
-                return purchaseUtil.toResult(order, "Order already paid");
+                return;
             }
             orderService.assertPending(order);
             if (request.paidAmount() != null && request.paidAmount().compareTo(order.getTotalPrice()) < 0) {
@@ -82,7 +87,7 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
             order.setStatus(OrderStatus.PAID);
             Order saved = orderRepository.save(order);
             ticketDeliveryService.sendTicket(saved, ticket);
-            return purchaseUtil.toResult(saved, "Payment callback success. externalPaymentId=" + request.externalPaymentId());
+            log.info("Test");
         });
     }
 
@@ -95,12 +100,16 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
         orderService.assertPending(order);
 
         String sessionId = UUID.randomUUID().toString();
-        String redirectUrl = "https://example.com"
-                + "?session=" + sessionId
-                + "&orderId=" + order.getId()
-                + "&amount=" + order.getTotalPrice()
-                + "&currency=" + order.getCurrency()
-                + "&returnUrl=/callback";
+        String redirectUrl =
+                UriComponentsBuilder
+                        .fromPath(paymentProviderUrl)
+                        .queryParam("session", sessionId)
+                        .queryParam("orderId", order.getId())
+                        .queryParam("amount", order.getTotalPrice())
+                        .queryParam("currency", order.getCurrency())
+                        .queryParam("replyTo", "payment-callback")
+                        .build()
+                        .toUriString();
         return new PaymentRedirectResponse(redirectUrl, sessionId);
     }
 }

@@ -1,5 +1,6 @@
 package vvp_company.paymentservice.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -46,7 +47,7 @@ public class PaymentPageController {
             @RequestParam BigDecimal amount,
             @RequestParam String currency,
             @RequestParam String replyTo
-    ) {
+    ) throws JsonProcessingException {
 
         var request = new PaymentPageRequest(
                 session,

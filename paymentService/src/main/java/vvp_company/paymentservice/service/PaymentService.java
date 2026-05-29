@@ -1,5 +1,6 @@
 package vvp_company.paymentservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import vvp_company.paymentservice.dto.PaymentCallbackRequest;
@@ -16,7 +17,7 @@ public class PaymentService {
     private final CallbackPublisher callbackPublisher;
     private final ReplyDestinationResolver destinationResolver;
 
-    public boolean processPayment(PaymentPageRequest request) {
+    public boolean processPayment(PaymentPageRequest request) throws JsonProcessingException {
 
         var success = new Random().nextInt(10) != 1;
 

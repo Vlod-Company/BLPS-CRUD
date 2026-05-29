@@ -3,7 +3,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16
-    container_name: blps-postgres
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: web3_db
@@ -20,8 +20,8 @@ services:
       retries: 5
 
   activemq:
-    image: rmohr/activemq:5.18.3
-    container_name: blps-activemq
+    image: apache/activemq:5.19.6
+    container_name: activemq
     restart: unless-stopped
     ports:
       - "61616:61616"
@@ -39,7 +39,7 @@ services:
     build:
       context: ./lab
       dockerfile: Dockerfile
-    container_name: blps-lab
+    container_name: lab
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -59,14 +59,12 @@ services:
       ACTIVEMQ_BROKER_URL: tcp://activemq:61616
       ACTIVEMQ_USER: admin
       ACTIVEMQ_PASSWORD: admin
-    volumes:
-      - ./lab/security-users.xml:/opt/jboss/security-users.xml
 
-  paymentService:
+  payment-service:
     build:
       context: ./paymentService
       dockerfile: Dockerfile
-    container_name: blps-payment-service
+    container_name: payment-service
     restart: unless-stopped
     ports:
       - "8085:8085"

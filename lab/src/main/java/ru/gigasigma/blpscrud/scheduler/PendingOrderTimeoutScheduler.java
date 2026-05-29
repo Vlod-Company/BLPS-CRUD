@@ -16,7 +16,10 @@ public class PendingOrderTimeoutScheduler {
 
     @Scheduled(fixedDelayString = "300000")
     public void refreshFlights() {
-        var pendingOrders = orderService.findAllOrders().stream().filter(order -> order.status().equals(OrderStatus.PENDING)).toList();
+        var pendingOrders = orderService.findAllOrders()
+                .stream()
+                .filter(order -> order.status().equals(OrderStatus.PENDING))
+                .toList();
 
         for (var order : pendingOrders) {
             if (order.createdAt().plusMinutes(5).isBefore(LocalDateTime.now())) {

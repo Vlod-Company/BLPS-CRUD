@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.jaas.AuthorityGranter;
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider;
+import org.springframework.security.authentication.jaas.JaasAuthenticationProvider;
 import org.springframework.security.authentication.jaas.memory.InMemoryConfiguration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -41,7 +42,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationProvider jaasAuthenticationProvider(
+    public DefaultJaasAuthenticationProvider jaasAuthenticationProvider(
             XmlUserStore xmlUserStore,
             PasswordEncoder passwordEncoder
     ) throws Exception {
@@ -65,7 +66,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider jaasAuthenticationProvider, JwtAuthenticationProvider jwtAuthenticationProvider, CIDRService cidrService, ClientIpResolver clientIpResolver) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, DefaultJaasAuthenticationProvider jaasAuthenticationProvider, JwtAuthenticationProvider jwtAuthenticationProvider, CIDRService cidrService, ClientIpResolver clientIpResolver) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
