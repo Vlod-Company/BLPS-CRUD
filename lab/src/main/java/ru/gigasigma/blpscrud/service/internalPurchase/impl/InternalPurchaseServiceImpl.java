@@ -91,6 +91,7 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
             ticketDeliveryService.sendTicket(saved, ticket);
             return new ExportedPurchase(saved, ticket);
         });
+        log.info("{}", purchase);
         if (purchase != null) {
             laxoCrmExportService.exportSuccessfulPurchase(purchase.order(), purchase.ticket());
         }

@@ -12,14 +12,10 @@ import javax.transaction.xa.XAResource;
 public class LaxoCrmResourceAdapter implements ResourceAdapter {
 
     @Override
-    public void start(BootstrapContext bootstrapContext) throws ResourceAdapterInternalException {
-        // No background workers are required for the synchronous outbound template.
-    }
+    public void start(BootstrapContext bootstrapContext) throws ResourceAdapterInternalException {}
 
     @Override
-    public void stop() {
-        // Nothing to release at adapter scope.
-    }
+    public void stop() {}
 
     @Override
     public void endpointActivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) {
@@ -27,9 +23,7 @@ public class LaxoCrmResourceAdapter implements ResourceAdapter {
     }
 
     @Override
-    public void endpointDeactivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) {
-        // Inbound messaging is not supported.
-    }
+    public void endpointDeactivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) {}
 
     @Override
     public XAResource[] getXAResources(ActivationSpec[] specs) throws ResourceException {

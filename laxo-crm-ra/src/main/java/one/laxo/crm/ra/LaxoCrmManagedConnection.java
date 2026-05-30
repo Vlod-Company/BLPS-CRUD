@@ -7,12 +7,15 @@ import jakarta.resource.spi.ConnectionRequestInfo;
 import jakarta.resource.spi.LocalTransaction;
 import jakarta.resource.spi.ManagedConnection;
 import jakarta.resource.spi.ManagedConnectionMetaData;
+import lombok.Data;
+
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
+@Data
 public class LaxoCrmManagedConnection implements ManagedConnection {
 
     private final LaxoCrmManagedConnectionFactory managedConnectionFactory;
@@ -80,16 +83,6 @@ public class LaxoCrmManagedConnection implements ManagedConnection {
         return new LaxoCrmManagedConnectionMetaData();
     }
 
-    @Override
-    public void setLogWriter(PrintWriter out) {
-        this.logWriter = out;
-    }
-
-    @Override
-    public PrintWriter getLogWriter() {
-        return logWriter;
-    }
-
     void closeHandle(LaxoCrmConnectionImpl closedHandle) {
         if (handle == closedHandle) {
             ConnectionEvent event = new ConnectionEvent(this, ConnectionEvent.CONNECTION_CLOSED);
@@ -107,9 +100,5 @@ public class LaxoCrmManagedConnection implements ManagedConnection {
         for (ConnectionEventListener listener : listeners) {
             listener.connectionErrorOccurred(event);
         }
-    }
-
-    LaxoCrmManagedConnectionFactory getManagedConnectionFactory() {
-        return managedConnectionFactory;
     }
 }

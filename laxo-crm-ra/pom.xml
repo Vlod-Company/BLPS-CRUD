@@ -21,8 +21,15 @@
             <groupId>one.laxo</groupId>
             <artifactId>laxo-crm-api</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
+            <systemPath>${project.basedir}/../laxo-crm-api/target/laxo-crm-api-1.0-SNAPSHOT.jar</systemPath>
+            <scope>system</scope>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>one.laxo</groupId>-->
+<!--            <artifactId>laxo-crm-api</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

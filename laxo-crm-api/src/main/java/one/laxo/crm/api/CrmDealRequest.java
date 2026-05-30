@@ -3,11 +3,12 @@ package one.laxo.crm.api;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+import lombok.*;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CrmDealRequest implements Serializable {
 
     private static final long serialVersionUID = 1L;

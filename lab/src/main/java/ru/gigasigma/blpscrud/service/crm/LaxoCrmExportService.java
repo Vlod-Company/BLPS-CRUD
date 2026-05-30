@@ -20,9 +20,11 @@ public class LaxoCrmExportService {
     private final ObjectProvider<LaxoCrmConnectionFactory> connectionFactoryProvider;
 
     public void exportSuccessfulPurchase(Order order, Ticket ticket) {
+        log.info("Attempting to export order to Laxo CRM. orderId={}", order.getId());
+
         LaxoCrmConnectionFactory connectionFactory = connectionFactoryProvider.getIfAvailable();
         if (connectionFactory == null) {
-            log.debug("Laxo CRM JCA export is disabled. orderId={}", order.getId());
+            log.warn("Laxo CRM JCA export is disabled. orderId={}", order.getId());
             return;
         }
 

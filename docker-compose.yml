@@ -20,7 +20,7 @@ services:
       retries: 5
 
   activemq:
-    image: apache/activemq:5.19.6
+    image: apache/activemq-classic:5.19.2
     container_name: activemq
     restart: unless-stopped
     ports:

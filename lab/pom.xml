@@ -7,6 +7,7 @@
         <groupId>ru.akka-rin</groupId>
         <artifactId>super</artifactId>
         <version>0.0.1</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>BLPS-CRUD</artifactId>
     <version>0.0.1</version>
@@ -120,8 +121,15 @@
             <groupId>one.laxo</groupId>
             <artifactId>laxo-crm-api</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <scope>provided</scope>
+            <systemPath>${project.basedir}/../laxo-crm-api/target/laxo-crm-api-1.0-SNAPSHOT.jar</systemPath>
+            <scope>system</scope>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>one.laxo</groupId>-->
+<!--            <artifactId>laxo-crm-api</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--        </dependency>-->
 
     </dependencies>
 
