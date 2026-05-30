@@ -6,9 +6,12 @@ import jakarta.resource.spi.BootstrapContext;
 import jakarta.resource.spi.ResourceAdapter;
 import jakarta.resource.spi.ResourceAdapterInternalException;
 import jakarta.resource.spi.endpoint.MessageEndpointFactory;
+import lombok.Data;
+
 import java.util.Objects;
 import javax.transaction.xa.XAResource;
 
+@Data
 public class LaxoCrmResourceAdapter implements ResourceAdapter {
 
     @Override
@@ -28,15 +31,5 @@ public class LaxoCrmResourceAdapter implements ResourceAdapter {
     @Override
     public XAResource[] getXAResources(ActivationSpec[] specs) throws ResourceException {
         return new XAResource[0];
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(LaxoCrmResourceAdapter.class);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof LaxoCrmResourceAdapter;
     }
 }
