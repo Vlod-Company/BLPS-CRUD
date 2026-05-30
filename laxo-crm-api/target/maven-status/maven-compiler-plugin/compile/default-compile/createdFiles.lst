@@ -1,0 +1,8 @@
+one\laxo\crm\api\CrmPurchaseExportResult.class
+one\laxo\crm\api\CrmContactResult.class
+one\laxo\crm\api\CrmDealResult.class
+one\laxo\crm\api\LaxoCrmConnectionFactory.class
+one\laxo\crm\api\CrmDealRequest.class
+one\laxo\crm\api\LaxoCrmConnection.class
+one\laxo\crm\api\CrmContactRequest.class
+one\laxo\crm\api\CrmPurchaseExportRequest.class

@@ -18,6 +18,7 @@ import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.repository.OrderRepository;
 import ru.gigasigma.blpscrud.service.CurrentUserService;
 import ru.gigasigma.blpscrud.service.OrderService;
+import ru.gigasigma.blpscrud.service.crm.LaxoCrmExportService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.service.externalAirlineLogic.AirlineBookingService;
 import ru.gigasigma.blpscrud.service.internalPurchase.InternalPurchaseService;
@@ -37,6 +38,7 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
     private final PurchaseUtil purchaseUtil;
     private final CurrentUserService currentUserService;
     private final PlatformTransactionManager txManager;
+    private final LaxoCrmExportService laxoCrmExportService;
 
     @Value("${payment.provider-url:http://localhost:8085/pay}")
     private String paymentProviderUrl;
@@ -58,7 +60,7 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
 
     @Override
     public void handlePaymentCallback(PaymentCallbackRequest request) {
-        ProgrammaticTransaction.defaultTransactionVoid(txManager, TransactionDefinition.withDefaults(),
+        ExportedPurchase purchase = ProgrammaticTransaction.defaultTransaction(txManager, TransactionDefinition.withDefaults(),
         () -> {
             Order order = orderService.getOrder(request.orderId());
             if (order.getPaymentMethod() != PaymentMethod.INTERNAL) {
@@ -72,10 +74,10 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
                         ? "Payment failed"
                         : request.failureReason();
                 log.warn("Payment callback for order {} failed: {}", order.getId(), reason);
-                return;
+                return null;
             }
             if (order.getStatus() == OrderStatus.PAID) {
-                return;
+                return null;
             }
             orderService.assertPending(order);
             if (request.paidAmount() != null && request.paidAmount().compareTo(order.getTotalPrice()) < 0) {
@@ -87,8 +89,11 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
             order.setStatus(OrderStatus.PAID);
             Order saved = orderRepository.save(order);
             ticketDeliveryService.sendTicket(saved, ticket);
-            log.info("Test");
+            return new ExportedPurchase(saved, ticket);
         });
+        if (purchase != null) {
+            laxoCrmExportService.exportSuccessfulPurchase(purchase.order(), purchase.ticket());
+        }
     }
 
     @Override
@@ -111,5 +116,8 @@ public class InternalPurchaseServiceImpl implements InternalPurchaseService {
                         .build()
                         .toUriString();
         return new PaymentRedirectResponse(redirectUrl, sessionId);
+    }
+
+    private record ExportedPurchase(Order order, Ticket ticket) {
     }
 }

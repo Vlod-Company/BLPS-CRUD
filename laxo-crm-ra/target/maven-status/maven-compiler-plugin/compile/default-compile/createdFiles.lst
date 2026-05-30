@@ -1,0 +1,11 @@
+one\laxo\crm\ra\LaxoCrmConnectionFactoryImpl.class
+one\laxo\crm\ra\LaxoCrmClientConfig.class
+one\laxo\crm\ra\LaxoCrmManagedConnection.class
+one\laxo\crm\ra\LaxoCrmManagedConnectionMetaData.class
+one\laxo\crm\ra\LaxoCrmResourceAdapter.class
+one\laxo\crm\ra\LaxoCrmClient.class
+one\laxo\crm\ra\LaxoCrmConnectionImpl$CrmCall.class
+one\laxo\crm\ra\LaxoCrmConnectionImpl.class
+one\laxo\crm\ra\StandaloneConnectionManager.class
+one\laxo\crm\ra\LaxoCrmManagedConnectionFactory.class
+one\laxo\crm\ra\LaxoCrmResourceAccessException.class

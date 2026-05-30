@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-deployment-structure>
+    <deployment>
+        <exclude-subsystems>
+            <subsystem name="jpa"/>
+            <subsystem name="weld"/>
+            <subsystem name="jsf"/>
+            <subsystem name="batch-jberet"/>
+        </exclude-subsystems>
+        <dependencies>
+            <module name="one.laxo.crm.api"/>
+        </dependencies>
+        <local-last value="true"/>
+    </deployment>
+</jboss-deployment-structure>

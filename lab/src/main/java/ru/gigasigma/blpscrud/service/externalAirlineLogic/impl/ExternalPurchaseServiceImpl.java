@@ -24,6 +24,7 @@ import ru.gigasigma.blpscrud.security.XmlAccount;
 import ru.gigasigma.blpscrud.security.XmlUserStore;
 import ru.gigasigma.blpscrud.service.CurrentUserService;
 import ru.gigasigma.blpscrud.service.TicketPricingService;
+import ru.gigasigma.blpscrud.service.crm.LaxoCrmExportService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.service.externalAirlineLogic.ExternalPurchaseService;
 import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
@@ -45,6 +46,7 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
     private final PurchaseUtil purchaseUtil;
     private final CurrentUserService currentUserService;
     private final PlatformTransactionManager txManager;
+    private final LaxoCrmExportService laxoCrmExportService;
 
     @Override
     public RedirectResponse generateRedirectLink(ExternalRedirectRequest request) {
@@ -61,7 +63,7 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
 
     @Override
     public WorkflowResult completeExternalBooking(ExternalBookingCallbackRequest request) {
-        return ProgrammaticTransaction.defaultTransaction(txManager, TransactionDefinition.withDefaults(),
+        ExternalBookingResult result = ProgrammaticTransaction.defaultTransaction(txManager, TransactionDefinition.withDefaults(),
         () -> {
             XmlAccount user = xmlUserStore.findById(request.userId())
                     .orElseThrow(() -> new EntityNotFoundException("User not found: " + request.userId()));
@@ -112,7 +114,12 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
                     + ", airlineTicketNumber=" + request.airlineTicketNumber()
                     + ", passengerEmail=" + request.passengerEmail()
                     + ", passengerPhone=" + request.passengerPhone();
-            return purchaseUtil.toResult(savedOrder, message);
+            return new ExternalBookingResult(purchaseUtil.toResult(savedOrder, message), savedOrder, savedTicket);
         });
+        laxoCrmExportService.exportSuccessfulPurchase(result.order(), result.ticket());
+        return result.workflowResult();
+    }
+
+    private record ExternalBookingResult(WorkflowResult workflowResult, Order order, Ticket ticket) {
     }
 }

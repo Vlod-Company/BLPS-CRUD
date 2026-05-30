@@ -37,7 +37,7 @@ services:
 
   lab:
     build:
-      context: ./lab
+      context: .
       dockerfile: Dockerfile
     container_name: lab
     restart: unless-stopped
@@ -59,6 +59,16 @@ services:
       ACTIVEMQ_BROKER_URL: tcp://activemq:61616
       ACTIVEMQ_USER: admin
       ACTIVEMQ_PASSWORD: admin
+
+      CRM_LAXO_ENABLED: ${CRM_LAXO_ENABLED:-true}
+      LAXO_CRM_BASE_URL: ${LAXO_CRM_BASE_URL:-https://api-dev.laxo.one}
+      LAXO_CRM_NAME: ${LAXO_CRM_NAME:-pool}
+      LAXO_CRM_SID: ${LAXO_CRM_SID:-replace-with-your-laxo-sid}
+      LAXO_CRM_CONNECT_TIMEOUT_MS: ${LAXO_CRM_CONNECT_TIMEOUT_MS:-5000}
+      LAXO_CRM_READ_TIMEOUT_MS: ${LAXO_CRM_READ_TIMEOUT_MS:-20000}
+      LAXO_CRM_FUNNEL_ID: ${LAXO_CRM_FUNNEL_ID:-1}
+      LAXO_CRM_ORDER_STATUS_ID: ${LAXO_CRM_ORDER_STATUS_ID:-3}
+      LAXO_CRM_ORDER_USER_MENTOR: ${LAXO_CRM_ORDER_USER_MENTOR:-1}
 
   payment-service:
     build:

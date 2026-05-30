@@ -406,7 +406,7 @@
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:jaxrs:5.0"/>
         <subsystem xmlns="urn:jboss:domain:jca:6.0">
-            <archive-validation enabled="true" fail-on-error="true" fail-on-warn="false"/>
+            <archive-validation enabled="true" fail-on-error="false" fail-on-warn="false"/>
             <bean-validation enabled="true"/>
             <default-workmanager>
                 <short-running-threads>
@@ -451,7 +451,30 @@
             <http-connector name="http-remoting-connector" connector-ref="default" sasl-authentication-factory="application-sasl-authentication"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:request-controller:1.0"/>
-        <subsystem xmlns="urn:jboss:domain:resource-adapters:7.1"/>
+        <subsystem xmlns="urn:jboss:domain:resource-adapters:7.1">
+            <resource-adapters>
+                <resource-adapter id="laxo-crm-ra-1.0-SNAPSHOT.rar">
+                    <archive>laxo-crm-ra-1.0-SNAPSHOT.rar</archive>
+                    <transaction-support>NoTransaction</transaction-support>
+                    <connection-definitions>
+                        <connection-definition class-name="one.laxo.crm.ra.LaxoCrmManagedConnectionFactory"
+                                               jndi-name="java:/eis/LaxoCrmConnectionFactory"
+                                               enabled="true"
+                                               use-java-context="true"
+                                               pool-name="LaxoCrmConnectionFactory">
+                            <config-property name="baseUrl">${env.LAXO_CRM_BASE_URL:https://api-dev.laxo.one}</config-property>
+                            <config-property name="sid">${env.LAXO_CRM_SID}</config-property>
+                            <config-property name="crmName">${env.LAXO_CRM_NAME:pool}</config-property>
+                            <config-property name="connectTimeoutMillis">${env.LAXO_CRM_CONNECT_TIMEOUT_MS:5000}</config-property>
+                            <config-property name="readTimeoutMillis">${env.LAXO_CRM_READ_TIMEOUT_MS:20000}</config-property>
+                            <config-property name="funnelId">${env.LAXO_CRM_FUNNEL_ID:1}</config-property>
+                            <config-property name="orderStatusId">${env.LAXO_CRM_ORDER_STATUS_ID:3}</config-property>
+                            <config-property name="orderUserMentor">${env.LAXO_CRM_ORDER_USER_MENTOR:1}</config-property>
+                        </connection-definition>
+                    </connection-definitions>
+                </resource-adapter>
+            </resource-adapters>
+        </subsystem>
         <subsystem xmlns="urn:jboss:domain:sar:1.0"/>
         <subsystem xmlns="urn:jboss:domain:security-manager:1.0">
             <deployment-permissions>
