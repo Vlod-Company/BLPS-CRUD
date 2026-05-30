@@ -102,25 +102,25 @@ class LaxoCrmClient {
                 )
         );
         Map<String, Object> command = requestItem("contact", "add", params);
-        String contactId = sendAndReadId(List.of(command));
+        String contactId = sendAndReadId(List.of(command), "contact_id");
         return new CrmContactResult(true, contactId, "Laxo contact.add completed");
     }
 
     CrmDealResult createDeal(CrmDealRequest request) {
         requireConfigured();
         List<Map<String, Object>> fields = List.of(
-                fieldValue(ensureCustomField("BLPS Order ID", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.externalOrderId())),
-                fieldValue(ensureCustomField("BLPS Order Status", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.orderStatus()),
-                fieldValue(ensureCustomField("BLPS Payment Method", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.paymentMethod()),
-                fieldValue(ensureCustomField("BLPS Flight Number", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.flightNumber()),
-                fieldValue(ensureCustomField("BLPS Route", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.route()),
-                fieldValue(ensureCustomField("BLPS Departure Time", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.departureTime())),
-                fieldValue(ensureCustomField("BLPS Arrival Time", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.arrivalTime())),
-                fieldValue(ensureCustomField("BLPS Seat Number", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.seatNumber()),
-                fieldValue(ensureCustomField("BLPS Seat Class", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.seatClass()),
-                fieldValue(ensureCustomField("BLPS Has Baggage", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.hasBaggage())),
-                fieldValue(ensureCustomField("BLPS Airline", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.airlineName()),
-                fieldValue(ensureCustomField("BLPS Currency", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.currency())
+                orderField("BLPS Order ID", stringValue(request.externalOrderId())),
+                orderField("BLPS Order Status", request.orderStatus()),
+                orderField("BLPS Payment Method", request.paymentMethod()),
+                orderField("BLPS Flight Number", request.flightNumber()),
+                orderField("BLPS Route", request.route()),
+                orderField("BLPS Departure Time", stringValue(request.departureTime())),
+                orderField("BLPS Arrival Time", stringValue(request.arrivalTime())),
+                orderField("BLPS Seat Number", request.seatNumber()),
+                orderField("BLPS Seat Class", request.seatClass()),
+                orderField("BLPS Has Baggage", stringValue(request.hasBaggage())),
+                orderField("BLPS Airline", request.airlineName()),
+                orderField("BLPS Currency", request.currency())
         );
         Map<String, Object> params = mapOf(
                 "order_name", required(request.title(), "deal title"),
@@ -128,12 +128,12 @@ class LaxoCrmClient {
                 "order_status_id", stringValue(config.orderStatusId()),
                 "funnel_id", stringValue(config.funnelId()),
                 "contact_id", required(request.contactId(), "contactId"),
-                "order_user_mentor", stringValue(config.orderUserMentor()),
-                "field", fields
+                "order_user_mentor", stringValue(config.orderUserMentor())
         );
         Map<String, Object> command = requestItem("order", "add", params);
-        String dealId = sendAndReadId(List.of(command));
-        return new CrmDealResult(true, dealId, "Laxo order.add completed");
+        String dealId = sendAndReadId(List.of(command), "order_id");
+        addOrderFields(dealId, fields);
+        return new CrmDealResult(true, dealId, "Laxo order.add and order.add_field completed");
     }
 
     Map<String, Object> requestItem(String className, String method, Object param) {
@@ -179,7 +179,7 @@ class LaxoCrmClient {
                 "field_icon_name", "",
                 "field_priority", 0
         );
-        String createdId = sendAndReadId(List.of(requestItem("field", "add", params)));
+        String createdId = sendAndReadId(List.of(requestItem("field", "add", params)), "field_id");
         CUSTOM_FIELD_CACHE.putIfAbsent(cacheKey, createdId);
         return createdId;
     }
@@ -193,9 +193,9 @@ class LaxoCrmClient {
         JsonNode root = readJson(response);
         JsonNode payload = firstResponse(root);
         for (JsonNode node : flattenObjects(payload)) {
-            String name = firstText(node, "field_name", "field_view_name", "name", "view_name");
+            String name = text(node, "field_view_name");
             if (fieldName.equals(name)) {
-                String id = firstText(node, "field_id", "id");
+                String id = text(node, "field_id");
                 if (id != null && !id.isBlank()) {
                     return id;
                 }
@@ -211,18 +211,46 @@ class LaxoCrmClient {
         );
     }
 
-    private String sendAndReadId(List<Map<String, Object>> commands) {
+    private Map<String, Object> orderField(String fieldName, Object value) {
+        return fieldValue(ensureCustomField(fieldName, ORDER_SCOPE_ID, ORDER_SCOPE_NAME), value);
+    }
+
+    private void addOrderFields(String orderId, List<Map<String, Object>> fields) {
+        List<Map<String, Object>> commands = fields.stream()
+                .map(field -> requestItem("order", "add_field", mapOf(
+                        "order_id", required(orderId, "dealId"),
+                        "field_id", stringValue(field.get("field_id")),
+                        "value", stringValue(field.get("value"))
+                )))
+                .toList();
+        sendAndExpectSuccess(commands);
+    }
+
+    private String sendAndReadId(List<Map<String, Object>> commands, String responseIdField) {
         String response = send(commands);
         JsonNode root = readJson(response);
-        int code = readFirstCode(root);
-        if (code != 200) {
-            throw new LaxoCrmResourceAccessException("Laxo CRM request failed with code " + code + ": " + response);
-        }
-        String id = readFirstResponseScalar(root);
+        ensureSuccess(root, response);
+        String id = readFirstResponseId(root, responseIdField);
         if (id == null || id.isBlank() || "false".equals(id)) {
-            throw new LaxoCrmResourceAccessException("Laxo CRM response does not contain created object id: " + response);
+            throw new LaxoCrmResourceAccessException(
+                    "Laxo CRM response does not contain " + responseIdField + ": " + response
+            );
         }
         return id;
+    }
+
+    private void sendAndExpectSuccess(List<Map<String, Object>> commands) {
+        String response = send(commands);
+        ensureSuccess(readJson(response), response);
+    }
+
+    private static void ensureSuccess(JsonNode root, String response) {
+        for (JsonNode item : responseItems(root)) {
+            int code = item.get("code") == null ? -1 : item.get("code").asInt(-1);
+            if (code != 200) {
+                throw new LaxoCrmResourceAccessException("Laxo CRM request failed with code " + code + ": " + response);
+            }
+        }
     }
 
     private String send(List<Map<String, Object>> commands) {
@@ -305,12 +333,7 @@ class LaxoCrmClient {
         return value == null || value <= 0 ? defaultValue : value;
     }
 
-    private static int readFirstCode(JsonNode root) {
-        JsonNode first = firstItem(root);
-        return first == null || first.get("code") == null ? -1 : first.get("code").asInt(-1);
-    }
-
-    private static String readFirstResponseScalar(JsonNode root) {
+    private static String readFirstResponseId(JsonNode root, String responseIdField) {
         JsonNode response = firstResponse(root);
         if (response == null || response.isNull() || response.isMissingNode()) {
             return null;
@@ -319,8 +342,7 @@ class LaxoCrmClient {
             response = response.get(0);
         }
         if (response.isObject()) {
-            String id = firstText(response, "id", "field_id", "contact_id", "order_id");
-            return id == null ? response.toString() : id;
+            return text(response, responseIdField);
         }
         return response.asText();
     }
@@ -330,6 +352,18 @@ class LaxoCrmClient {
             return null;
         }
         return root.isArray() && !root.isEmpty() ? root.get(0) : root;
+    }
+
+    private static List<JsonNode> responseItems(JsonNode root) {
+        if (root == null || root.isNull() || root.isMissingNode()) {
+            return List.of();
+        }
+        if (!root.isArray()) {
+            return List.of(root);
+        }
+        List<JsonNode> result = new ArrayList<>();
+        root.forEach(result::add);
+        return result;
     }
 
     private static JsonNode firstResponse(JsonNode root) {
@@ -355,14 +389,9 @@ class LaxoCrmClient {
         }
     }
 
-    private static String firstText(JsonNode node, String... names) {
-        for (String name : names) {
-            JsonNode value = node.get(name);
-            if (value != null && !value.isNull() && !value.isMissingNode()) {
-                return value.asText();
-            }
-        }
-        return null;
+    private static String text(JsonNode node, String name) {
+        JsonNode value = node.get(name);
+        return value == null || value.isNull() || value.isMissingNode() ? null : value.asText();
     }
 
     private static Map<String, Object> mapOf(Object... keyValues) {
