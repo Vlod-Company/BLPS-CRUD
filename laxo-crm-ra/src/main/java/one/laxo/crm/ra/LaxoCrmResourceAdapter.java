@@ -15,21 +15,23 @@ import javax.transaction.xa.XAResource;
 public class LaxoCrmResourceAdapter implements ResourceAdapter {
 
     @Override
-    public void start(BootstrapContext bootstrapContext) throws ResourceAdapterInternalException {}
+    public void start(BootstrapContext bootstrapContext) {}
 
     @Override
     public void stop() {}
 
     @Override
     public void endpointActivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) {
-        throw new UnsupportedOperationException("Inbound messaging is not supported by Laxo CRM resource adapter");
+        throw new UnsupportedOperationException("Inbound messaging is not supported");
     }
 
     @Override
-    public void endpointDeactivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) {}
+    public void endpointDeactivation(MessageEndpointFactory endpointFactory, ActivationSpec spec) {
+        throw new UnsupportedOperationException("Inbound messaging is not supported");
+    }
 
     @Override
     public XAResource[] getXAResources(ActivationSpec[] specs) throws ResourceException {
-        return new XAResource[0];
+        throw new ResourceException("XA not supported");
     }
 }

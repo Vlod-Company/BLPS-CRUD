@@ -60,29 +60,30 @@ class LaxoCrmClient {
             return new CrmPurchaseExportResult(false, null, null, contact.getMessage());
         }
 
-        CrmDealRequest dealRequest = new CrmDealRequest();
-        dealRequest.setTitle("Ticket purchase #" + request.getOrderId());
-        dealRequest.setAmount(request.getTotalPrice());
-        dealRequest.setCurrency(request.getCurrency());
-        dealRequest.setExternalOrderId(request.getOrderId());
-        dealRequest.setOrderStatus(request.getOrderStatus());
-        dealRequest.setPaymentMethod(request.getPaymentMethod());
-        dealRequest.setFlightNumber(request.getFlightNumber());
-        dealRequest.setRoute(joinRoute(request.getDepartureAirport(), request.getArrivalAirport()));
-        dealRequest.setDepartureTime(request.getDepartureTime());
-        dealRequest.setArrivalTime(request.getArrivalTime());
-        dealRequest.setSeatNumber(request.getSeatNumber());
-        dealRequest.setSeatClass(request.getSeatClass());
-        dealRequest.setHasBaggage(request.getHasBaggage());
-        dealRequest.setAirlineName(request.getAirlineName());
-        dealRequest.setContactId(contact.getContactId());
+        CrmDealRequest dealRequest = new CrmDealRequest(
+                "Ticket purchase #" + request.getOrderId(),
+                request.getTotalPrice(),
+                request.getCurrency(),
+                request.getOrderId(),
+                request.getOrderStatus(),
+                request.getPaymentMethod(),
+                request.getFlightNumber(),
+                joinRoute(request.getDepartureAirport(), request.getArrivalAirport()),
+                request.getDepartureTime(),
+                request.getArrivalTime(),
+                request.getSeatNumber(),
+                request.getSeatClass(),
+                request.getHasBaggage(),
+                request.getAirlineName(),
+                contact.getContactId()
+        );
 
         CrmDealResult deal = createDeal(dealRequest);
         return new CrmPurchaseExportResult(
-                deal.isSuccess(),
+                deal.success(),
                 contact.getContactId(),
-                deal.getDealId(),
-                deal.isSuccess() ? "Ticket purchase exported to Laxo CRM" : deal.getMessage()
+                deal.dealId(),
+                deal.success() ? "Ticket purchase exported to Laxo CRM" : deal.message()
         );
     }
 
@@ -108,25 +109,25 @@ class LaxoCrmClient {
     CrmDealResult createDeal(CrmDealRequest request) {
         requireConfigured();
         List<Map<String, Object>> fields = List.of(
-                fieldValue(ensureCustomField("BLPS Order ID", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.getExternalOrderId())),
-                fieldValue(ensureCustomField("BLPS Order Status", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getOrderStatus()),
-                fieldValue(ensureCustomField("BLPS Payment Method", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getPaymentMethod()),
-                fieldValue(ensureCustomField("BLPS Flight Number", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getFlightNumber()),
-                fieldValue(ensureCustomField("BLPS Route", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getRoute()),
-                fieldValue(ensureCustomField("BLPS Departure Time", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.getDepartureTime())),
-                fieldValue(ensureCustomField("BLPS Arrival Time", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.getArrivalTime())),
-                fieldValue(ensureCustomField("BLPS Seat Number", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getSeatNumber()),
-                fieldValue(ensureCustomField("BLPS Seat Class", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getSeatClass()),
-                fieldValue(ensureCustomField("BLPS Has Baggage", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.getHasBaggage())),
-                fieldValue(ensureCustomField("BLPS Airline", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getAirlineName()),
-                fieldValue(ensureCustomField("BLPS Currency", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.getCurrency())
+                fieldValue(ensureCustomField("BLPS Order ID", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.externalOrderId())),
+                fieldValue(ensureCustomField("BLPS Order Status", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.orderStatus()),
+                fieldValue(ensureCustomField("BLPS Payment Method", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.paymentMethod()),
+                fieldValue(ensureCustomField("BLPS Flight Number", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.flightNumber()),
+                fieldValue(ensureCustomField("BLPS Route", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.route()),
+                fieldValue(ensureCustomField("BLPS Departure Time", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.departureTime())),
+                fieldValue(ensureCustomField("BLPS Arrival Time", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.arrivalTime())),
+                fieldValue(ensureCustomField("BLPS Seat Number", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.seatNumber()),
+                fieldValue(ensureCustomField("BLPS Seat Class", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.seatClass()),
+                fieldValue(ensureCustomField("BLPS Has Baggage", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), stringValue(request.hasBaggage())),
+                fieldValue(ensureCustomField("BLPS Airline", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.airlineName()),
+                fieldValue(ensureCustomField("BLPS Currency", ORDER_SCOPE_ID, ORDER_SCOPE_NAME), request.currency())
         );
         Map<String, Object> params = mapOf(
-                "order_name", required(request.getTitle(), "deal title"),
-                "order_sum", stringValue(request.getAmount()),
+                "order_name", required(request.title(), "deal title"),
+                "order_sum", stringValue(request.amount()),
                 "order_status_id", stringValue(config.orderStatusId()),
                 "funnel_id", stringValue(config.funnelId()),
-                "contact_id", required(request.getContactId(), "contactId"),
+                "contact_id", required(request.contactId(), "contactId"),
                 "order_user_mentor", stringValue(config.orderUserMentor()),
                 "field", fields
         );

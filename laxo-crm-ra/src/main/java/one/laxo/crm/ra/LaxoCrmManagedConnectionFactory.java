@@ -17,8 +17,6 @@ import lombok.Data;
 @Data
 public class LaxoCrmManagedConnectionFactory implements ManagedConnectionFactory, ResourceAdapterAssociation, Serializable {
 
-    private static final long serialVersionUID = 1L;
-
     private String baseUrl = "https://api-dev.laxo.one";
     private String sid;
     private String crmName;
@@ -37,7 +35,7 @@ public class LaxoCrmManagedConnectionFactory implements ManagedConnectionFactory
 
     @Override
     public Object createConnectionFactory() {
-        return new LaxoCrmConnectionFactoryImpl(this, new StandaloneConnectionManager());
+        throw new UnsupportedOperationException("Will always run in managed environment");
     }
 
     @Override

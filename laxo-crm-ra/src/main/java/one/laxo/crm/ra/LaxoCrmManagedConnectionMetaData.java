@@ -21,7 +21,7 @@ class LaxoCrmManagedConnectionMetaData implements ManagedConnectionMetaData {
     }
 
     @Override
-    public String getUserName() throws ResourceException {
+    public String getUserName() {
         return null;
     }
 }

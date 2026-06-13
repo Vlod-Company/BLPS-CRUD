@@ -1,6 +1,6 @@
 package one.laxo.crm.ra;
 
-record LaxoCrmClientConfig(
+public record LaxoCrmClientConfig(
         String baseUrl,
         String sid,
         String crmName,

@@ -13,9 +13,6 @@ import one.laxo.crm.api.LaxoCrmConnectionFactory;
 @Data
 @RequiredArgsConstructor
 public class LaxoCrmConnectionFactoryImpl implements LaxoCrmConnectionFactory, Referenceable {
-
-    private static final long serialVersionUID = 1L;
-
     private final LaxoCrmManagedConnectionFactory managedConnectionFactory;
     private final ConnectionManager connectionManager;
     private Reference reference;
