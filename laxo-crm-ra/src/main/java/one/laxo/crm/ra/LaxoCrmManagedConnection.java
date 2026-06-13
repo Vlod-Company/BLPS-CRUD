@@ -78,12 +78,12 @@ public class LaxoCrmManagedConnection implements ManagedConnection {
 
     @Override
     public XAResource getXAResource() throws ResourceException {
-        throw new ResourceException("XA transactions are not supported by Laxo CRM resource adapter");
+        throw new ResourceException("XA transactions are not supported");
     }
 
     @Override
     public LocalTransaction getLocalTransaction() throws ResourceException {
-        throw new ResourceException("Local transactions are not supported by Laxo CRM resource adapter");
+        throw new ResourceException("Local transactions are not supported");
     }
 
     @Override
@@ -110,7 +110,7 @@ public class LaxoCrmManagedConnection implements ManagedConnection {
         }
     }
 
-    LaxoCrmManagedConnectionFactory managedConnectionFactory() {
+    public LaxoCrmManagedConnectionFactory managedConnectionFactory() {
         return managedConnectionFactory;
     }
 }

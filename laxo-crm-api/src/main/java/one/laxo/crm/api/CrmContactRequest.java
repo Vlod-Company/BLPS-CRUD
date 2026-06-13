@@ -7,5 +7,5 @@ public record CrmContactRequest(
         Long externalUserId,
         String documentNumber,
         String source
-) implements Serializable {
+) {
 }

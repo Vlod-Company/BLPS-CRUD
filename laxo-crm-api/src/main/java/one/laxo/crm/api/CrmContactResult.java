@@ -6,5 +6,5 @@ public record CrmContactResult(
         boolean success,
         String contactId,
         String message
-) implements Serializable {
+) {
 }

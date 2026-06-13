@@ -31,5 +31,5 @@ public record CrmPurchaseExportRequest(
         String airlineIataCode,
         String airlineCountry,
         String airlineWebsiteUrl
-) implements Serializable {
+) {
 }

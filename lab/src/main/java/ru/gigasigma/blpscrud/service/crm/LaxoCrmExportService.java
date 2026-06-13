@@ -31,6 +31,7 @@ public class LaxoCrmExportService {
         CrmPurchaseExportRequest request = mapPurchase(order, ticket);
         try (var connection = connectionFactory.getConnection()) {
             CrmPurchaseExportResult result = connection.exportTicketPurchase(request);
+            log.info("{}", result);
             if (result.success()) {
                 log.info("Order exported to Laxo CRM. orderId={}, contactId={}, dealId={}",
                         order.getId(), result.contactId(), result.dealId());

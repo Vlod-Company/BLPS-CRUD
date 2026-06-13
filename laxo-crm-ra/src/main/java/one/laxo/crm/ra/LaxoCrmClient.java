@@ -40,14 +40,14 @@ class LaxoCrmClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    LaxoCrmClient(LaxoCrmClientConfig config) {
+    public LaxoCrmClient(LaxoCrmClientConfig config) {
         this.config = config;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(timeout(config.connectTimeoutMillis(), 5000)))
                 .build();
     }
 
-    CrmPurchaseExportResult exportTicketPurchase(CrmPurchaseExportRequest request) {
+    public CrmPurchaseExportResult exportTicketPurchase(CrmPurchaseExportRequest request) {
         requireConfigured();
         CrmContactResult contact = createOrUpdateContact(new CrmContactRequest(
                 request.passengerName(),
@@ -86,7 +86,7 @@ class LaxoCrmClient {
         );
     }
 
-    CrmContactResult createOrUpdateContact(CrmContactRequest request) {
+    public CrmContactResult createOrUpdateContact(CrmContactRequest request) {
         requireConfigured();
         String externalUserIdFieldId = ensureCustomField("BLPS User ID", CONTACT_SCOPE_ID, CONTACT_SCOPE_NAME);
         String documentFieldId = ensureCustomField("BLPS Passenger Document", CONTACT_SCOPE_ID, CONTACT_SCOPE_NAME);
@@ -105,7 +105,7 @@ class LaxoCrmClient {
         return new CrmContactResult(true, contactId, "Laxo contact.add completed");
     }
 
-    CrmDealResult createDeal(CrmDealRequest request) {
+    public CrmDealResult createDeal(CrmDealRequest request) {
         requireConfigured();
         List<Map<String, Object>> fields = List.of(
                 orderField("BLPS Order ID", stringValue(request.externalOrderId())),
@@ -135,7 +135,7 @@ class LaxoCrmClient {
         return new CrmDealResult(true, dealId, "Laxo order.add and order.add_field completed");
     }
 
-    Map<String, Object> requestItem(String className, String method, Object param) {
+    private Map<String, Object> requestItem(String className, String method, Object param) {
         return mapOf(
                 "class", className,
                 "method", method,
@@ -144,15 +144,15 @@ class LaxoCrmClient {
         );
     }
 
-    List<Map<String, Object>> requestBody(String className, String method, Object param) {
+    private List<Map<String, Object>> requestBody(String className, String method, Object param) {
         return List.of(requestItem(className, method, param));
     }
 
-    String origin() {
+    private String origin() {
         return "https://" + config.crmName() + ".laxo.one";
     }
 
-    String apiUrl() {
+    private String apiUrl() {
         return config.baseUrl();
     }
 

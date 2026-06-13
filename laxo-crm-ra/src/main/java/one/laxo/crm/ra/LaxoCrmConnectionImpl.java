@@ -1,12 +1,10 @@
 package one.laxo.crm.ra;
 
-import one.laxo.crm.api.CrmContactRequest;
-import one.laxo.crm.api.CrmContactResult;
-import one.laxo.crm.api.CrmDealRequest;
-import one.laxo.crm.api.CrmDealResult;
 import one.laxo.crm.api.CrmPurchaseExportRequest;
 import one.laxo.crm.api.CrmPurchaseExportResult;
 import one.laxo.crm.api.LaxoCrmConnection;
+
+import java.util.function.Supplier;
 
 public class LaxoCrmConnectionImpl implements LaxoCrmConnection {
 
@@ -22,16 +20,6 @@ public class LaxoCrmConnectionImpl implements LaxoCrmConnection {
     @Override
     public CrmPurchaseExportResult exportTicketPurchase(CrmPurchaseExportRequest request) {
         return execute(() -> client.exportTicketPurchase(request));
-    }
-
-    @Override
-    public CrmContactResult createOrUpdateContact(CrmContactRequest request) {
-        return execute(() -> client.createOrUpdateContact(request));
-    }
-
-    @Override
-    public CrmDealResult createDeal(CrmDealRequest request) {
-        return execute(() -> client.createDeal(request));
     }
 
     @Override
@@ -53,10 +41,10 @@ public class LaxoCrmConnectionImpl implements LaxoCrmConnection {
         this.client = null;
     }
 
-    private <T> T execute(CrmCall<T> call) {
+    private <T> T execute(Supplier<T> call) {
         ensureOpen();
         try {
-            return call.execute();
+            return call.get();
         } catch (RuntimeException e) {
             managedConnection.connectionError(e, this);
             throw e;
@@ -67,10 +55,5 @@ public class LaxoCrmConnectionImpl implements LaxoCrmConnection {
         if (closed || managedConnection == null || client == null) {
             throw new LaxoCrmResourceAccessException("Laxo CRM connection is closed");
         }
-    }
-
-    @FunctionalInterface
-    private interface CrmCall<T> {
-        T execute();
     }
 }
