@@ -31,11 +31,11 @@ public class LaxoCrmExportService {
         CrmPurchaseExportRequest request = mapPurchase(order, ticket);
         try (var connection = connectionFactory.getConnection()) {
             CrmPurchaseExportResult result = connection.exportTicketPurchase(request);
-            if (result.isSuccess()) {
+            if (result.success()) {
                 log.info("Order exported to Laxo CRM. orderId={}, contactId={}, dealId={}",
-                        order.getId(), result.getContactId(), result.getDealId());
+                        order.getId(), result.contactId(), result.dealId());
             } else {
-                log.warn("Laxo CRM export failed. orderId={}, message={}", order.getId(), result.getMessage());
+                log.warn("Laxo CRM export failed. orderId={}, message={}", order.getId(), result.message());
             }
         } catch (RuntimeException e) {
             log.warn("Laxo CRM export failed. orderId={}", order.getId(), e);
@@ -46,33 +46,33 @@ public class LaxoCrmExportService {
         Flight flight = ticket.getFlight();
         Airline airline = flight.getAirline();
 
-        CrmPurchaseExportRequest request = new CrmPurchaseExportRequest();
-        request.setOrderId(order.getId());
-        request.setUserId(order.getUserId());
-        request.setCreatedAt(order.getCreatedAt());
-        request.setTotalPrice(order.getTotalPrice());
-        request.setCurrency(order.getCurrency());
-        request.setOrderStatus(order.getStatus().name());
-        request.setPaymentMethod(order.getPaymentMethod().name());
-        request.setExternalLink(order.getExternalLink());
-        request.setTicketId(ticket.getId());
-        request.setSeatNumber(ticket.getSeatNumber());
-        request.setSeatClass(ticket.getSeatClass().name());
-        request.setHasBaggage(ticket.getHasBaggage());
-        request.setPassengerName(ticket.getPassengerName());
-        request.setPassengerPassport(ticket.getPassengerPassport());
-        request.setFlightId(flight.getId());
-        request.setFlightNumber(flight.getFlightNumber());
-        request.setDepartureAirport(flight.getDepartureAirport());
-        request.setArrivalAirport(flight.getArrivalAirport());
-        request.setDepartureTime(flight.getDepartureTime());
-        request.setArrivalTime(flight.getArrivalTime());
-        request.setAircraftType(flight.getAircraftType());
-        request.setBasePrice(flight.getBasePrice());
-        request.setAirlineName(airline.getName());
-        request.setAirlineIataCode(airline.getIataCode());
-        request.setAirlineCountry(airline.getCountry());
-        request.setAirlineWebsiteUrl(airline.getWebsiteUrl());
-        return request;
+        return new CrmPurchaseExportRequest(
+                order.getId(),
+                order.getUserId(),
+                order.getCreatedAt(),
+                order.getTotalPrice(),
+                order.getCurrency(),
+                order.getStatus().name(),
+                order.getPaymentMethod().name(),
+                order.getExternalLink(),
+                ticket.getId(),
+                ticket.getSeatNumber(),
+                ticket.getSeatClass().name(),
+                ticket.getHasBaggage(),
+                ticket.getPassengerName(),
+                ticket.getPassengerPassport(),
+                flight.getId(),
+                flight.getFlightNumber(),
+                flight.getDepartureAirport(),
+                flight.getArrivalAirport(),
+                flight.getDepartureTime(),
+                flight.getArrivalTime(),
+                flight.getAircraftType(),
+                flight.getBasePrice(),
+                airline.getName(),
+                airline.getIataCode(),
+                airline.getCountry(),
+                airline.getWebsiteUrl()
+        );
     }
 }

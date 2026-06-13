@@ -4,14 +4,11 @@ import jakarta.resource.ResourceException;
 import jakarta.resource.spi.ActivationSpec;
 import jakarta.resource.spi.BootstrapContext;
 import jakarta.resource.spi.ResourceAdapter;
-import jakarta.resource.spi.ResourceAdapterInternalException;
 import jakarta.resource.spi.endpoint.MessageEndpointFactory;
-import lombok.Data;
-
-import java.util.Objects;
 import javax.transaction.xa.XAResource;
+import lombok.EqualsAndHashCode;
 
-@Data
+@EqualsAndHashCode
 public class LaxoCrmResourceAdapter implements ResourceAdapter {
 
     @Override

@@ -7,7 +7,6 @@ import jakarta.resource.spi.ConnectionRequestInfo;
 import jakarta.resource.spi.LocalTransaction;
 import jakarta.resource.spi.ManagedConnection;
 import jakarta.resource.spi.ManagedConnectionMetaData;
-import lombok.Data;
 
 import java.io.PrintWriter;
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
-@Data
 public class LaxoCrmManagedConnection implements ManagedConnection {
 
     private final LaxoCrmManagedConnectionFactory managedConnectionFactory;
@@ -69,6 +67,16 @@ public class LaxoCrmManagedConnection implements ManagedConnection {
     }
 
     @Override
+    public PrintWriter getLogWriter() {
+        return logWriter;
+    }
+
+    @Override
+    public void setLogWriter(PrintWriter logWriter) {
+        this.logWriter = logWriter;
+    }
+
+    @Override
     public XAResource getXAResource() throws ResourceException {
         throw new ResourceException("XA transactions are not supported by Laxo CRM resource adapter");
     }
@@ -100,5 +108,9 @@ public class LaxoCrmManagedConnection implements ManagedConnection {
         for (ConnectionEventListener listener : listeners) {
             listener.connectionErrorOccurred(event);
         }
+    }
+
+    LaxoCrmManagedConnectionFactory managedConnectionFactory() {
+        return managedConnectionFactory;
     }
 }

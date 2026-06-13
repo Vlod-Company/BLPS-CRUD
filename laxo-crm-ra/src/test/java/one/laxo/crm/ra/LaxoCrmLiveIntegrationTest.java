@@ -34,17 +34,17 @@ class LaxoCrmLiveIntegrationTest {
         try (var connection = connectionFactory.getConnection()) {
             CrmPurchaseExportResult result = connection.exportTicketPurchase(request);
 
-            assertTrue(result.isSuccess(), result.getMessage());
-            assertNotNull(result.getContactId(), "CRM contact id must be returned");
-            assertFalse(result.getContactId().isBlank(), "CRM contact id must not be blank");
-            assertNotNull(result.getDealId(), "CRM deal id must be returned");
-            assertFalse(result.getDealId().isBlank(), "CRM deal id must not be blank");
+            assertTrue(result.success(), result.message());
+            assertNotNull(result.contactId(), "CRM contact id must be returned");
+            assertFalse(result.contactId().isBlank(), "CRM contact id must not be blank");
+            assertNotNull(result.dealId(), "CRM deal id must be returned");
+            assertFalse(result.dealId().isBlank(), "CRM deal id must not be blank");
 
             System.out.printf(
                     "Laxo CRM live export created contactId=%s, dealId=%s, orderId=%s%n",
-                    result.getContactId(),
-                    result.getDealId(),
-                    request.getOrderId()
+                    result.contactId(),
+                    result.dealId(),
+                    request.orderId()
             );
         }
     }
@@ -53,34 +53,34 @@ class LaxoCrmLiveIntegrationTest {
         long uniqueId = System.currentTimeMillis();
         LocalDateTime now = LocalDateTime.now();
 
-        CrmPurchaseExportRequest request = new CrmPurchaseExportRequest();
-        request.setOrderId(uniqueId);
-        request.setUserId(1000L + uniqueId % 100000);
-        request.setCreatedAt(now);
-        request.setTotalPrice(new BigDecimal("12345.67"));
-        request.setCurrency("RUB");
-        request.setOrderStatus("PAID");
-        request.setPaymentMethod("INTERNAL");
-        request.setExternalLink("live-jca-test-" + uniqueId);
-        request.setTicketId(uniqueId + 1);
-        request.setSeatNumber("12A");
-        request.setSeatClass("ECONOMY");
-        request.setHasBaggage(true);
-        request.setPassengerName("BLPS JCA Test " + uniqueId);
-        request.setPassengerPassport("4510 123456");
-        request.setFlightId(777L);
-        request.setFlightNumber("BLPS-" + uniqueId % 10000);
-        request.setDepartureAirport("LED");
-        request.setArrivalAirport("SVO");
-        request.setDepartureTime(now.plusDays(3));
-        request.setArrivalTime(now.plusDays(3).plusHours(2));
-        request.setAircraftType("Airbus A320");
-        request.setBasePrice(new BigDecimal("10000.00"));
-        request.setAirlineName("BLPS Test Airlines");
-        request.setAirlineIataCode("BT");
-        request.setAirlineCountry("RU");
-        request.setAirlineWebsiteUrl("https://example.com/blps-jca-test");
-        return request;
+        return new CrmPurchaseExportRequest(
+                uniqueId,
+                1000L + uniqueId % 100000,
+                now,
+                new BigDecimal("12345.67"),
+                "RUB",
+                "PAID",
+                "INTERNAL",
+                "live-jca-test-" + uniqueId,
+                uniqueId + 1,
+                "12A",
+                "ECONOMY",
+                true,
+                "BLPS JCA Test " + uniqueId,
+                "4510 123456",
+                777L,
+                "BLPS-" + uniqueId % 10000,
+                "LED",
+                "SVO",
+                now.plusDays(3),
+                now.plusDays(3).plusHours(2),
+                "Airbus A320",
+                new BigDecimal("10000.00"),
+                "BLPS Test Airlines",
+                "BT",
+                "RU",
+                "https://example.com/blps-jca-test"
+        );
     }
 
     private static String requiredEnv(String name) {

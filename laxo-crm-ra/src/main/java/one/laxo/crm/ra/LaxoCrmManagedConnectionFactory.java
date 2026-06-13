@@ -8,7 +8,6 @@ import jakarta.resource.spi.ResourceAdapter;
 import jakarta.resource.spi.ResourceAdapterAssociation;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.Objects;
 import java.util.Set;
 import javax.security.auth.Subject;
 
@@ -55,7 +54,7 @@ public class LaxoCrmManagedConnectionFactory implements ManagedConnectionFactory
     @Override
     public ManagedConnection matchManagedConnections(Set connectionSet, Subject subject, ConnectionRequestInfo info) {
         for (Object candidate : connectionSet) {
-            if (candidate instanceof LaxoCrmManagedConnection connection && equals(connection.getManagedConnectionFactory())) {
+            if (candidate instanceof LaxoCrmManagedConnection connection && equals(connection.managedConnectionFactory())) {
                 return connection;
             }
         }

@@ -4,39 +4,32 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
-@Data
-public class CrmPurchaseExportRequest implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    private Long orderId;
-    private Long userId;
-    private LocalDateTime createdAt;
-    private BigDecimal totalPrice;
-    private String currency;
-    private String orderStatus;
-    private String paymentMethod;
-    private String externalLink;
-    private Long ticketId;
-    private String seatNumber;
-    private String seatClass;
-    private Boolean hasBaggage;
-    private String passengerName;
-    private String passengerPassport;
-    private Long flightId;
-    private String flightNumber;
-    private String departureAirport;
-    private String arrivalAirport;
-    private LocalDateTime departureTime;
-    private LocalDateTime arrivalTime;
-    private String aircraftType;
-    private BigDecimal basePrice;
-    private String airlineName;
-    private String airlineIataCode;
-    private String airlineCountry;
-    private String airlineWebsiteUrl;
+public record CrmPurchaseExportRequest(
+        Long orderId,
+        Long userId,
+        LocalDateTime createdAt,
+        BigDecimal totalPrice,
+        String currency,
+        String orderStatus,
+        String paymentMethod,
+        String externalLink,
+        Long ticketId,
+        String seatNumber,
+        String seatClass,
+        Boolean hasBaggage,
+        String passengerName,
+        String passengerPassport,
+        Long flightId,
+        String flightNumber,
+        String departureAirport,
+        String arrivalAirport,
+        LocalDateTime departureTime,
+        LocalDateTime arrivalTime,
+        String aircraftType,
+        BigDecimal basePrice,
+        String airlineName,
+        String airlineIataCode,
+        String airlineCountry,
+        String airlineWebsiteUrl
+) implements Serializable {
 }

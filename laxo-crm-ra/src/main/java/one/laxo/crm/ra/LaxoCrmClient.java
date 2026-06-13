@@ -49,39 +49,38 @@ class LaxoCrmClient {
 
     CrmPurchaseExportResult exportTicketPurchase(CrmPurchaseExportRequest request) {
         requireConfigured();
-        CrmContactRequest contactRequest = new CrmContactRequest();
-        contactRequest.setFullName(request.getPassengerName());
-        contactRequest.setExternalUserId(request.getUserId());
-        contactRequest.setDocumentNumber(maskDocument(request.getPassengerPassport()));
-        contactRequest.setSource(SOURCE);
-
-        CrmContactResult contact = createOrUpdateContact(contactRequest);
-        if (!contact.isSuccess()) {
-            return new CrmPurchaseExportResult(false, null, null, contact.getMessage());
+        CrmContactResult contact = createOrUpdateContact(new CrmContactRequest(
+                request.passengerName(),
+                request.userId(),
+                maskDocument(request.passengerPassport()),
+                SOURCE
+        ));
+        if (!contact.success()) {
+            return new CrmPurchaseExportResult(false, null, null, contact.message());
         }
 
         CrmDealRequest dealRequest = new CrmDealRequest(
-                "Ticket purchase #" + request.getOrderId(),
-                request.getTotalPrice(),
-                request.getCurrency(),
-                request.getOrderId(),
-                request.getOrderStatus(),
-                request.getPaymentMethod(),
-                request.getFlightNumber(),
-                joinRoute(request.getDepartureAirport(), request.getArrivalAirport()),
-                request.getDepartureTime(),
-                request.getArrivalTime(),
-                request.getSeatNumber(),
-                request.getSeatClass(),
-                request.getHasBaggage(),
-                request.getAirlineName(),
-                contact.getContactId()
+                "Ticket purchase #" + request.orderId(),
+                request.totalPrice(),
+                request.currency(),
+                request.orderId(),
+                request.orderStatus(),
+                request.paymentMethod(),
+                request.flightNumber(),
+                joinRoute(request.departureAirport(), request.arrivalAirport()),
+                request.departureTime(),
+                request.arrivalTime(),
+                request.seatNumber(),
+                request.seatClass(),
+                request.hasBaggage(),
+                request.airlineName(),
+                contact.contactId()
         );
 
         CrmDealResult deal = createDeal(dealRequest);
         return new CrmPurchaseExportResult(
                 deal.success(),
-                contact.getContactId(),
+                contact.contactId(),
                 deal.dealId(),
                 deal.success() ? "Ticket purchase exported to Laxo CRM" : deal.message()
         );
@@ -94,11 +93,11 @@ class LaxoCrmClient {
         String sourceFieldId = ensureCustomField("BLPS Source", CONTACT_SCOPE_ID, CONTACT_SCOPE_NAME);
 
         Map<String, Object> params = mapOf(
-                "contact_name", required(request.getFullName(), "contact fullName"),
+                "contact_name", required(request.fullName(), "contact fullName"),
                 "field", List.of(
-                        fieldValue(externalUserIdFieldId, stringValue(request.getExternalUserId())),
-                        fieldValue(documentFieldId, request.getDocumentNumber()),
-                        fieldValue(sourceFieldId, request.getSource())
+                        fieldValue(externalUserIdFieldId, stringValue(request.externalUserId())),
+                        fieldValue(documentFieldId, request.documentNumber()),
+                        fieldValue(sourceFieldId, request.source())
                 )
         );
         Map<String, Object> command = requestItem("contact", "add", params);
