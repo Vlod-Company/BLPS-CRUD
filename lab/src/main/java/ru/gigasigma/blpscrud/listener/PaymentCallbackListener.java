@@ -12,14 +12,14 @@ import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 import org.springframework.jms.support.converter.SimpleMessageConverter;
 import org.springframework.stereotype.Component;
 import ru.gigasigma.blpscrud.controller.dto.request.PaymentCallbackRequest;
-import ru.gigasigma.blpscrud.service.internalPurchase.InternalPurchaseService;
+import ru.gigasigma.blpscrud.service.PaymentCallbackProcessingService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PaymentCallbackListener {
 
-    private final InternalPurchaseService internalPurchaseService;
+    private final PaymentCallbackProcessingService callbackProcessingService;
 
     @PostConstruct
     public void init() {
@@ -40,8 +40,7 @@ public class PaymentCallbackListener {
     ) throws JsonProcessingException {
         var req =
                 new ObjectMapper().readValue(json, PaymentCallbackRequest.class);
-        log.info("PaymentCallbackListener received callback for orderId: {}", req.orderId());
         log.info("{}", req);
-        internalPurchaseService.handlePaymentCallback(req);
+        callbackProcessingService.handleCallback(req);
     }
 }

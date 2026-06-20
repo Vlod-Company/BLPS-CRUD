@@ -100,6 +100,15 @@ public class XmlUserStore {
         }
     }
 
+    public List<XmlAccount> findAll() {
+        lock.readLock().lock();
+        try {
+            return normalizeAccounts(readAccounts(resolvePath()));
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     public boolean existsByLogin(String login) {
         return findByLogin(login).isPresent();
     }

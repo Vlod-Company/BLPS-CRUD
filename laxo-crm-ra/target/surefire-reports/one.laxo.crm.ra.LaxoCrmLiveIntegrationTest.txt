@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: one.laxo.crm.ra.LaxoCrmLiveIntegrationTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0.033 s -- in one.laxo.crm.ra.LaxoCrmLiveIntegrationTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.155 s -- in one.laxo.crm.ra.LaxoCrmLiveIntegrationTest

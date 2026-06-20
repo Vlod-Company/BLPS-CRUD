@@ -1,0 +1,12 @@
+.git
+.idea
+*.iml
+
+**/target
+**/.mvn/wrapper/maven-wrapper.jar
+
+*.log
+*.tmp
+
+.env
+docker-compose.override.yml

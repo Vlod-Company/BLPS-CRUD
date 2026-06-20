@@ -23,6 +23,7 @@ public class AuthService {
     private final XmlUserStore xmlUserStore;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final CamundaIdentitySyncService camundaIdentitySyncService;
 
     public XmlAccount register(String login, String password) {
         log.info("Registering XML user account. login={}", login);
@@ -31,6 +32,7 @@ public class AuthService {
             throw new IllegalArgumentException("Login is already taken");
         }
         XmlAccount account = xmlUserStore.createUser(login, passwordEncoder.encode(password), USER_ROLE, login);
+        camundaIdentitySyncService.syncRegisteredUser(account, password);
         log.info("XML user account registered successfully. id={}, login={}", account.id(), account.login());
         return account;
     }
@@ -42,10 +44,12 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        if (!passwordEncoder.matches(user.password(), xmlUser.get().passwordHash())) {
+        XmlAccount account = xmlUser.get();
+        if (!passwordEncoder.matches(user.password(), account.passwordHash())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
+        camundaIdentitySyncService.syncAuthenticatedUser(account, user.password());
         return new LoginResponse(jwtService.generateToken(user.login(), clientIp));
     }
 }

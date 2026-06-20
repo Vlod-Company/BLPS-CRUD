@@ -4,8 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import jakarta.resource.ResourceException;
+import jakarta.resource.spi.ConnectionManager;
+import jakarta.resource.spi.ConnectionRequestInfo;
+import jakarta.resource.spi.ManagedConnectionFactory;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import javax.security.auth.Subject;
 import one.laxo.crm.api.CrmPurchaseExportRequest;
 import one.laxo.crm.api.CrmPurchaseExportResult;
 import one.laxo.crm.api.LaxoCrmConnectionFactory;
@@ -28,7 +33,7 @@ class LaxoCrmLiveIntegrationTest {
         managedConnectionFactory.setOrderUserMentor(intEnv("LIVE_CRM_ORDER_USER_MENTOR", 1));
 
         LaxoCrmConnectionFactory connectionFactory =
-                (LaxoCrmConnectionFactory) managedConnectionFactory.createConnectionFactory();
+                (LaxoCrmConnectionFactory) managedConnectionFactory.createConnectionFactory(new LocalConnectionManager());
 
         CrmPurchaseExportRequest request = purchaseRequest();
         try (var connection = connectionFactory.getConnection()) {
@@ -99,5 +104,17 @@ class LaxoCrmLiveIntegrationTest {
     private static int intEnv(String name, int defaultValue) {
         String value = System.getenv(name);
         return value == null || value.isBlank() ? defaultValue : Integer.parseInt(value);
+    }
+
+    private static final class LocalConnectionManager implements ConnectionManager {
+
+        @Override
+        public Object allocateConnection(
+                ManagedConnectionFactory managedConnectionFactory,
+                ConnectionRequestInfo connectionRequestInfo
+        ) throws ResourceException {
+            var managedConnection = managedConnectionFactory.createManagedConnection(new Subject(), connectionRequestInfo);
+            return managedConnection.getConnection(new Subject(), connectionRequestInfo);
+        }
     }
 }

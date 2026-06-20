@@ -1,0 +1,665 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:conversion="http://camunda.org/schema/conversion/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.16.0" conversion:converterVersion="0.3.2" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.7.0">
+  <bpmn:message id="Message_PaymentReceived" name="PaymentReceived" />
+  <bpmn:message id="Message_TicketIssued" name="TicketIssued" />
+  <bpmn:process id="Process_Main" processType="None" isClosed="false" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Main">
+      <bpmn:lane id="Lane_User" name="Пользователь - Frontend">
+        <bpmn:flowNodeRef>StartEvent_User</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_1awz7si</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0npl9la</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0qct9sk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_1djsotr</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_1wkigj3</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_10hakir</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_16l74zy</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_User_Search</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_User_Select</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Backend" name="Авиасеилс - Aviasales Backend">
+        <bpmn:flowNodeRef>DataStore_Orders</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Type</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Redirect</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Ticket_Issued</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Save_Ticket</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Send_Email</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0xnwoyp</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Create_Order</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Req_Booking</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_132now7</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_126lgmh</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0o495wo</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_0dzms0l</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Show_Results</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Airline" name="External System">
+        <bpmn:flowNodeRef>DataStore_Airline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0io0e9o</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Check_Seats</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Issue_Ticket</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0xpe0tb</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Buy_On_Airline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_01uhvfb</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0s5qi0h</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_16ay3tl</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_072zhh0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_0dt0z2r</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_User">
+      <bpmn:outgoing>Flow_U1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="Gateway_1awz7si" name="Есть подходящий билет?" default="Flow_123lgcx">
+      <bpmn:incoming>Msg_Show</bpmn:incoming>
+      <bpmn:outgoing>Flow_0eqq1xv</bpmn:outgoing>
+      <bpmn:outgoing>Flow_123lgcx</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateCatchEvent id="Event_0io0e9o" name="Запрос оплаты">
+      <bpmn:incoming>Flow_1udm2te</bpmn:incoming>
+      <bpmn:outgoing>Flow_1y5bw71</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1kdxzyq" messageRef="Message_PaymentReceived">
+        <bpmn:extensionElements>
+          <zeebe:subscription correlationKey="=orderId" />
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateThrowEvent id="Event_0npl9la" name="Переход по ссылке редиректа">
+      <bpmn:incoming>Msg_Redirect_Link</bpmn:incoming>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0ssmloq" name="RedirectToAirline" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="Event_0qct9sk">
+      <bpmn:incoming>Msg_Email</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="Gateway_Type" name="Тип покупки?" default="Flow_19uwbnq">
+      <bpmn:incoming>Msg_Select</bpmn:incoming>
+      <bpmn:outgoing>Flow_Go_Redirect</bpmn:outgoing>
+      <bpmn:outgoing>Flow_19uwbnq</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Redirect" name="Генерация ссылки редиректа">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="redirectDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Go_Redirect</bpmn:incoming>
+      <bpmn:outgoing>Msg_Redirect_Link</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Event_Ticket_Issued" name="Билет получен">
+      <bpmn:incoming>Msg_Ticket_Resp</bpmn:incoming>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_TicketIssued" messageRef="Message_TicketIssued">
+        <bpmn:extensionElements>
+          <zeebe:subscription correlationKey="=orderId" />
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Task_Save_Ticket" name="Сохранить билет в БД" implementation="##WebService">
+      <bpmn:extensionElements>
+        <conversion:message severity="REVIEW">Delegate class or expression '${saveTicketDelegate}' has been transformed to job type 'saveTicketDelegate'.</conversion:message>
+        <zeebe:taskHeaders>
+          <zeebe:header key="delegateExpression" value="${saveTicketDelegate}" />
+        </zeebe:taskHeaders>
+        <zeebe:taskDefinition type="saveTicketDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOut_Update">
+        <bpmn:targetRef>DataStore_Orders</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Send_Email" name="Отправить PDF клиенту" implementation="##WebService">
+      <bpmn:extensionElements>
+        <conversion:message severity="REVIEW">Delegate class or expression '${emailDelegate}' has been transformed to job type 'emailDelegate'.</conversion:message>
+        <zeebe:taskHeaders>
+          <zeebe:header key="delegateExpression" value="${emailDelegate}" />
+        </zeebe:taskHeaders>
+        <zeebe:taskDefinition type="emailDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_8</bpmn:incoming>
+      <bpmn:outgoing>Msg_Email</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Check_Seats" name="Проверка мест">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="checkSeatsDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Buy_To_Check</bpmn:incoming>
+      <bpmn:incoming>Flow_1km891b</bpmn:incoming>
+      <bpmn:outgoing>Flow_A_Issue</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1cx8rru">
+        <bpmn:targetRef>DataStore_Airline</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Issue_Ticket" name="Эмиссия билета">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="issueTicketDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_A_Issue</bpmn:incoming>
+      <bpmn:outgoing>Msg_Ticket_Resp</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOut_Issue">
+        <bpmn:targetRef>DataStore_Airline</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:dataStoreReference id="DataStore_Airline" name="Система бронирования (GDS)" />
+    <bpmn:intermediateCatchEvent id="Event_0xpe0tb" name="Переход по ссылке редиректа">
+      <bpmn:outgoing>Flow_Redirect_To_Select</bpmn:outgoing>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_1cpp422" name="RedirectToAirline" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Task_Buy_On_Airline" name="Логика внешнего сервиса">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="externalPurchaseDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Redirect_To_Select</bpmn:incoming>
+      <bpmn:outgoing>Flow_Buy_To_Check</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="Event_0xnwoyp" name="seat is already taken">
+      <bpmn:incoming>Flow_1wytfm9</bpmn:incoming>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0mf0erc" name="SeatUnavailable" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateCatchEvent id="Event_1djsotr" name="seat are already taken">
+      <bpmn:outgoing>Flow_16092zt</bpmn:outgoing>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0ru80fq" name="SeatUnavailable" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:dataStoreReference id="DataStore_Orders" name="БД Заказов (PostgreSQL)" />
+    <bpmn:serviceTask id="Task_Create_Order" name="Создать заказ" implementation="##WebService">
+      <bpmn:extensionElements>
+        <conversion:message severity="REVIEW">Delegate class or expression '${createOrderDelegate}' has been transformed to job type 'createOrderDelegate'.</conversion:message>
+        <zeebe:taskHeaders>
+          <zeebe:header key="delegateExpression" value="${createOrderDelegate}" />
+        </zeebe:taskHeaders>
+        <zeebe:taskDefinition type="createOrderDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_19uwbnq</bpmn:incoming>
+      <bpmn:outgoing>Flow_1udm2te</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOut_Create">
+        <bpmn:targetRef>DataStore_Orders</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Event_1wkigj3" name="payment failure">
+      <bpmn:outgoing>Flow_0493ee5</bpmn:outgoing>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_1cn7v7j" name="PaymentFailure" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:exclusiveGateway id="Gateway_10hakir">
+      <bpmn:incoming>Flow_16092zt</bpmn:incoming>
+      <bpmn:incoming>Flow_0493ee5</bpmn:incoming>
+      <bpmn:incoming>Flow_123lgcx</bpmn:incoming>
+      <bpmn:outgoing>Flow_1v9k2nj</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Activity_01uhvfb" name="Обработка оплаты">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="processPaymentDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1y5bw71</bpmn:incoming>
+      <bpmn:outgoing>Flow_0m41qwb</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="Event_0s5qi0h" name="payment processed">
+      <bpmn:incoming>Flow_0m41qwb</bpmn:incoming>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0btkgl3" name="PaymentProcessed" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateCatchEvent id="Event_16l74zy" name="payment prosessed">
+      <bpmn:outgoing>Flow_046ku4v</bpmn:outgoing>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_1658n4n" name="PaymentProcessed" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Activity_16ay3tl" name="Создание сделки по заказу">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="createCrmDealDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0aw1atc</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:startEvent id="Event_0o495wo" name="Каждые 5 минут">
+      <bpmn:outgoing>Flow_13l0zl9</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_04sy4si">
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R/PT5M</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_0dzms0l" name="Удалить все заказы Pending, которым &#62; 5 минут">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="cancelPendingOrdersDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_13l0zl9</bpmn:incoming>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_16j2kq7">
+        <bpmn:targetRef>DataStore_Orders</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_User_Search" name="Ввод параметров поиска" implementation="##unspecified">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:assignmentDefinition candidateGroups="USER" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_U1</bpmn:incoming>
+      <bpmn:incoming>Flow_1v9k2nj</bpmn:incoming>
+      <bpmn:outgoing>Flow_06spb9e</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_User_Select" name="Клик &#34;Купить&#34;" implementation="##unspecified">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:assignmentDefinition candidateGroups="USER" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0eqq1xv</bpmn:incoming>
+      <bpmn:outgoing>Msg_Select</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Req_Booking" name="Запрос эмиссии в АК" implementation="##WebService">
+      <bpmn:extensionElements>
+        <conversion:message severity="REVIEW">Delegate class or expression '${bookingDelegate}' has been transformed to job type 'bookingDelegate'.</conversion:message>
+        <zeebe:taskHeaders>
+          <zeebe:header key="delegateExpression" value="${bookingDelegate}" />
+        </zeebe:taskHeaders>
+        <zeebe:taskDefinition type="bookingDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_046ku4v</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ebh3k3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_126lgmh" name="Отправка билета в LAXO">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="exportCrmDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ebh3k3</bpmn:incoming>
+      <bpmn:outgoing>Flow_1km891b</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0aw1atc</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Event_132now7" attachedToRef="Task_Create_Order">
+      <bpmn:outgoing>Flow_1wytfm9</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_0nruic8" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_U1" sourceRef="StartEvent_User" targetRef="Task_User_Search" />
+    <bpmn:sequenceFlow id="Msg_Show" sourceRef="Task_Show_Results" targetRef="Gateway_1awz7si" />
+    <bpmn:sequenceFlow id="Flow_123lgcx" name="нет" sourceRef="Gateway_1awz7si" targetRef="Gateway_10hakir" />
+    <bpmn:sequenceFlow id="Flow_0eqq1xv" name="да" sourceRef="Gateway_1awz7si" targetRef="Task_User_Select">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=hasAvailableFlights = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1udm2te" sourceRef="Task_Create_Order" targetRef="Event_0io0e9o" />
+    <bpmn:sequenceFlow id="Flow_1y5bw71" sourceRef="Event_0io0e9o" targetRef="Activity_01uhvfb" />
+    <bpmn:sequenceFlow id="Msg_Redirect_Link" sourceRef="Task_Redirect" targetRef="Event_0npl9la" />
+    <bpmn:sequenceFlow id="Msg_Email" sourceRef="Task_Send_Email" targetRef="Event_0qct9sk" />
+    <bpmn:sequenceFlow id="Msg_Select" sourceRef="Task_User_Select" targetRef="Gateway_Type" />
+    <bpmn:sequenceFlow id="Flow_Go_Redirect" name="На сайте АК" sourceRef="Gateway_Type" targetRef="Task_Redirect">
+      <bpmn:extensionElements>
+        <conversion:message link="https://docs.camunda.io/docs/components/modeler/bpmn/exclusive-gateways/#conditions" severity="REVIEW">Condition expression: Please review transformed expression: '${method=='redirect'}' -&gt; '=method="redirect"'.</conversion:message>
+      </bpmn:extensionElements>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=method="redirect"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_19uwbnq" name="У нас" sourceRef="Gateway_Type" targetRef="Task_Create_Order" />
+    <bpmn:sequenceFlow id="Msg_Ticket_Resp" sourceRef="Task_Issue_Ticket" targetRef="Event_Ticket_Issued" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Event_Ticket_Issued" targetRef="Task_Save_Ticket" />
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="Task_Save_Ticket" targetRef="Task_Send_Email" />
+    <bpmn:sequenceFlow id="Flow_Buy_To_Check" sourceRef="Task_Buy_On_Airline" targetRef="Task_Check_Seats" />
+    <bpmn:sequenceFlow id="Flow_A_Issue" sourceRef="Task_Check_Seats" targetRef="Task_Issue_Ticket" />
+    <bpmn:sequenceFlow id="Flow_Redirect_To_Select" sourceRef="Event_0xpe0tb" targetRef="Task_Buy_On_Airline" />
+    <bpmn:sequenceFlow id="Flow_1wytfm9" sourceRef="Event_132now7" targetRef="Event_0xnwoyp" />
+    <bpmn:sequenceFlow id="Flow_16092zt" sourceRef="Event_1djsotr" targetRef="Gateway_10hakir" />
+    <bpmn:sequenceFlow id="Flow_1km891b" sourceRef="Activity_126lgmh" targetRef="Task_Check_Seats" />
+    <bpmn:sequenceFlow id="Flow_0493ee5" sourceRef="Event_1wkigj3" targetRef="Gateway_10hakir" />
+    <bpmn:sequenceFlow id="Flow_1v9k2nj" sourceRef="Gateway_10hakir" targetRef="Task_User_Search" />
+    <bpmn:sequenceFlow id="Flow_06spb9e" sourceRef="Task_User_Search" targetRef="Task_Show_Results" />
+    <bpmn:sequenceFlow id="Flow_0m41qwb" sourceRef="Activity_01uhvfb" targetRef="Event_0s5qi0h" />
+    <bpmn:sequenceFlow id="Flow_046ku4v" sourceRef="Event_16l74zy" targetRef="Task_Req_Booking" />
+    <bpmn:sequenceFlow id="Flow_0aw1atc" sourceRef="Activity_126lgmh" targetRef="Activity_16ay3tl" />
+    <bpmn:sequenceFlow id="Flow_13l0zl9" sourceRef="Event_0o495wo" targetRef="Activity_0dzms0l" />
+    <bpmn:sequenceFlow id="Flow_0ebh3k3" sourceRef="Task_Req_Booking" targetRef="Activity_126lgmh" />
+    <bpmn:boundaryEvent id="Event_072zhh0" attachedToRef="Activity_01uhvfb">
+      <bpmn:outgoing>Flow_15bvciz</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_01ycp32" />
+    </bpmn:boundaryEvent>
+    <bpmn:intermediateThrowEvent id="Event_0dt0z2r" name="payment failure">
+      <bpmn:incoming>Flow_15bvciz</bpmn:incoming>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_1ma6cv0" name="PaymentFailure" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_15bvciz" sourceRef="Event_072zhh0" targetRef="Event_0dt0z2r" />
+    <bpmn:serviceTask id="Task_Show_Results" name="Вернуть список рейсов">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="showFlightsDelegate" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_06spb9e</bpmn:incoming>
+      <bpmn:outgoing>Msg_Show</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_Main">
+      <bpmndi:BPMNShape id="Lane_User_di" bpmnElement="Lane_User" isHorizontal="true" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="160" y="80" width="1590" height="390" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Backend_di" bpmnElement="Lane_Backend" isHorizontal="true" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="160" y="470" width="1590" height="660" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Airline_di" bpmnElement="Lane_Airline" isHorizontal="true" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="160" y="1130" width="1590" height="310" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_User_di" bpmnElement="StartEvent_User">
+        <dc:Bounds x="222" y="263" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1awz7si_di" bpmnElement="Gateway_1awz7si" isMarkerVisible="true">
+        <dc:Bounds x="585" y="256" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="565" y="315" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0io0e9o_di" bpmnElement="Event_0io0e9o">
+        <dc:Bounds x="261" y="1252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="180" y="1263" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0npl9la_di" bpmnElement="Event_0npl9la">
+        <dc:Bounds x="952" y="273" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="941" y="231" width="59" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0qct9sk_di" bpmnElement="Event_0qct9sk">
+        <dc:Bounds x="1692" y="273" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Type_di" bpmnElement="Gateway_Type" isMarkerVisible="true">
+        <dc:Bounds x="785" y="745" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="835" y="763" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Redirect_di" bpmnElement="Task_Redirect">
+        <dc:Bounds x="870" y="650" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Ticket_Issued_di" bpmnElement="Event_Ticket_Issued">
+        <dc:Bounds x="1452" y="752" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1433" y="728" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Save_Ticket_di" bpmnElement="Task_Save_Ticket">
+        <dc:Bounds x="1540" y="730" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Send_Email_di" bpmnElement="Task_Send_Email">
+        <dc:Bounds x="1540" y="620" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Check_Seats_di" bpmnElement="Task_Check_Seats">
+        <dc:Bounds x="1100" y="1210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Issue_Ticket_di" bpmnElement="Task_Issue_Ticket">
+        <dc:Bounds x="1370" y="1210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStore_Airline_di" bpmnElement="DataStore_Airline">
+        <dc:Bounds x="1265" y="1295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1254" y="1345" width="73" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0xpe0tb_di" bpmnElement="Event_0xpe0tb">
+        <dc:Bounds x="762" y="1232" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="751" y="1275" width="59" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Buy_On_Airline_di" bpmnElement="Task_Buy_On_Airline">
+        <dc:Bounds x="900" y="1210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0clph8e" bpmnElement="Event_0xnwoyp">
+        <dc:Bounds x="652" y="970" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="636" y="941" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1gnvadh" bpmnElement="Event_1djsotr">
+        <dc:Bounds x="212" y="143" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="191" y="186" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataStore_Orders_di" bpmnElement="DataStore_Orders">
+        <dc:Bounds x="1245" y="895" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1237" y="945" width="67" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Create_Order_di" bpmnElement="Task_Create_Order">
+        <dc:Bounds x="890" y="920" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_09zofm7" bpmnElement="Event_1wkigj3">
+        <dc:Bounds x="452" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="433" y="195" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_10hakir_di" bpmnElement="Gateway_10hakir">
+        <dc:Bounds x="325" y="145" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_01uhvfb_di" bpmnElement="Activity_01uhvfb">
+        <dc:Bounds x="350" y="1230" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0s5qi0h_di" bpmnElement="Event_0s5qi0h">
+        <dc:Bounds x="512" y="1252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="505" y="1295" width="51" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_16l74zy_di" bpmnElement="Event_16l74zy">
+        <dc:Bounds x="1192" y="332" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1184" y="295" width="51" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_126lgmh_di" bpmnElement="Activity_126lgmh">
+        <dc:Bounds x="1166" y="980" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_16ay3tl_di" bpmnElement="Activity_16ay3tl">
+        <dc:Bounds x="1540" y="1230" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1g242ir_di" bpmnElement="Task_User_Search">
+        <dc:Bounds x="300" y="241" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18lpb6h_di" bpmnElement="Task_User_Select">
+        <dc:Bounds x="680" y="241" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Req_Booking_di" bpmnElement="Task_Req_Booking">
+        <dc:Bounds x="1160" y="634" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0dt0z2r_di" bpmnElement="Event_0dt0z2r">
+        <dc:Bounds x="472" y="1372" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="453" y="1415" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0muc1zp_di" bpmnElement="Event_0o495wo">
+        <dc:Bounds x="222" y="952" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="199" y="995" width="83" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0dzms0l_di" bpmnElement="Activity_0dzms0l">
+        <dc:Bounds x="360" y="930" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0mxyz6o_di" bpmnElement="Task_Show_Results">
+        <dc:Bounds x="470" y="730" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1mrcte5" bpmnElement="Event_132now7">
+        <dc:Bounds x="872" y="942" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_072zhh0_di" bpmnElement="Event_072zhh0">
+        <dc:Bounds x="382" y="1292" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="DataOut_Update_di" bpmnElement="DataOut_Update">
+        <di:waypoint x="1590" y="810" />
+        <di:waypoint x="1590" y="910" />
+        <di:waypoint x="1295" y="919" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1cx8rru_di" bpmnElement="DataOutputAssociation_1cx8rru">
+        <di:waypoint x="1150" y="1290" />
+        <di:waypoint x="1150" y="1320" />
+        <di:waypoint x="1260" y="1320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOut_Issue_di" bpmnElement="DataOut_Issue">
+        <di:waypoint x="1420" y="1290" />
+        <di:waypoint x="1420" y="1320" />
+        <di:waypoint x="1315" y="1320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Redirect_To_Select_di" bpmnElement="Flow_Redirect_To_Select">
+        <di:waypoint x="798" y="1250" />
+        <di:waypoint x="900" y="1250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Buy_To_Check_di" bpmnElement="Flow_Buy_To_Check">
+        <di:waypoint x="1000" y="1250" />
+        <di:waypoint x="1100" y="1250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U1_di" bpmnElement="Flow_U1">
+        <di:waypoint x="258" y="281" />
+        <di:waypoint x="300" y="281" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_123lgcx_di" bpmnElement="Flow_123lgcx">
+        <di:waypoint x="610" y="256" />
+        <di:waypoint x="610" y="90" />
+        <di:waypoint x="350" y="90" />
+        <di:waypoint x="350" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="462" y="103" width="17" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0eqq1xv_di" bpmnElement="Flow_0eqq1xv">
+        <di:waypoint x="635" y="281" />
+        <di:waypoint x="680" y="281" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="641" y="263" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Go_Redirect_di" bpmnElement="Flow_Go_Redirect">
+        <di:waypoint x="810" y="745" />
+        <di:waypoint x="810" y="690" />
+        <di:waypoint x="870" y="690" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="778" y="673" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_7_di" bpmnElement="Flow_7">
+        <di:waypoint x="1488" y="770" />
+        <di:waypoint x="1540" y="770" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_8_di" bpmnElement="Flow_8">
+        <di:waypoint x="1590" y="730" />
+        <di:waypoint x="1590" y="700" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A_Issue_di" bpmnElement="Flow_A_Issue">
+        <di:waypoint x="1200" y="1250" />
+        <di:waypoint x="1370" y="1250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_Show_di" bpmnElement="Msg_Show">
+        <di:waypoint x="520" y="730" />
+        <di:waypoint x="520" y="281" />
+        <di:waypoint x="585" y="281" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_Select_di" bpmnElement="Msg_Select">
+        <di:waypoint x="730" y="321" />
+        <di:waypoint x="730" y="770" />
+        <di:waypoint x="785" y="770" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_Redirect_Link_di" bpmnElement="Msg_Redirect_Link">
+        <di:waypoint x="920" y="650" />
+        <di:waypoint x="920" y="480" />
+        <di:waypoint x="970" y="480" />
+        <di:waypoint x="970" y="309" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_Ticket_Resp_di" bpmnElement="Msg_Ticket_Resp">
+        <di:waypoint x="1420" y="1210" />
+        <di:waypoint x="1420" y="940" />
+        <di:waypoint x="1470" y="940" />
+        <di:waypoint x="1470" y="788" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_Email_di" bpmnElement="Msg_Email">
+        <di:waypoint x="1590" y="620" />
+        <di:waypoint x="1590" y="291" />
+        <di:waypoint x="1692" y="291" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOut_Create_di" bpmnElement="DataOut_Create">
+        <di:waypoint x="990" y="937" />
+        <di:waypoint x="1030" y="920" />
+        <di:waypoint x="1090" y="920" />
+        <di:waypoint x="1245" y="920" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19uwbnq_di" bpmnElement="Flow_19uwbnq">
+        <di:waypoint x="810" y="795" />
+        <di:waypoint x="810" y="870" />
+        <di:waypoint x="940" y="870" />
+        <di:waypoint x="940" y="920" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="811" y="800" width="28" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16092zt_di" bpmnElement="Flow_16092zt">
+        <di:waypoint x="248" y="161" />
+        <di:waypoint x="279" y="161" />
+        <di:waypoint x="279" y="170" />
+        <di:waypoint x="325" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0493ee5_di" bpmnElement="Flow_0493ee5">
+        <di:waypoint x="452" y="170" />
+        <di:waypoint x="375" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1v9k2nj_di" bpmnElement="Flow_1v9k2nj">
+        <di:waypoint x="350" y="195" />
+        <di:waypoint x="350" y="241" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06spb9e_di" bpmnElement="Flow_06spb9e">
+        <di:waypoint x="350" y="321" />
+        <di:waypoint x="350" y="770" />
+        <di:waypoint x="470" y="770" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1y5bw71_di" bpmnElement="Flow_1y5bw71">
+        <di:waypoint x="297" y="1270" />
+        <di:waypoint x="350" y="1270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0m41qwb_di" bpmnElement="Flow_0m41qwb">
+        <di:waypoint x="450" y="1270" />
+        <di:waypoint x="512" y="1270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_046ku4v_di" bpmnElement="Flow_046ku4v">
+        <di:waypoint x="1210" y="368" />
+        <di:waypoint x="1210" y="634" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1km891b_di" bpmnElement="Flow_1km891b">
+        <di:waypoint x="1216" y="1060" />
+        <di:waypoint x="1216" y="1135" />
+        <di:waypoint x="1150" y="1135" />
+        <di:waypoint x="1150" y="1210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0aw1atc_di" bpmnElement="Flow_0aw1atc">
+        <di:waypoint x="1266" y="1020" />
+        <di:waypoint x="1590" y="1020" />
+        <di:waypoint x="1590" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_16j2kq7_di" bpmnElement="DataOutputAssociation_16j2kq7">
+        <di:waypoint x="450" y="930" />
+        <di:waypoint x="530" y="850" />
+        <di:waypoint x="1265" y="850" />
+        <di:waypoint x="1265" y="895" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13l0zl9_di" bpmnElement="Flow_13l0zl9">
+        <di:waypoint x="258" y="970" />
+        <di:waypoint x="360" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wytfm9_di" bpmnElement="Flow_1wytfm9">
+        <di:waypoint x="872" y="960" />
+        <di:waypoint x="780" y="960" />
+        <di:waypoint x="780" y="988" />
+        <di:waypoint x="688" y="988" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1udm2te_di" bpmnElement="Flow_1udm2te">
+        <di:waypoint x="940" y="1000" />
+        <di:waypoint x="940" y="1100" />
+        <di:waypoint x="279" y="1100" />
+        <di:waypoint x="279" y="1252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ebh3k3_di" bpmnElement="Flow_0ebh3k3">
+        <di:waypoint x="1210" y="714" />
+        <di:waypoint x="1210" y="847" />
+        <di:waypoint x="1216" y="847" />
+        <di:waypoint x="1216" y="980" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15bvciz_di" bpmnElement="Flow_15bvciz">
+        <di:waypoint x="400" y="1328" />
+        <di:waypoint x="400" y="1390" />
+        <di:waypoint x="472" y="1390" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

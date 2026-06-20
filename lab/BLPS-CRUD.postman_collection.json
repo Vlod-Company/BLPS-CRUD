@@ -1,491 +1,362 @@
 {
   "info": {
     "_postman_id": "9729dd76-8759-4224-b3b9-6f6a70d9bf5b",
-    "name": "BLPS-CRUD Public API",
+    "name": "BLPS-CRUD Camunda 7 API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "47671829",
-    "description": "Updated collection for Spring Security HTTP Basic, XML-backed users, internal/external purchases, my orders and my tickets."
+    "description": "Camunda 7 happy-path checks for Process_Main and payment callback correlation."
   },
   "item": [
     {
-      "name": "Auth - Register User",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"login\": \"{{userLogin}}\",\n  \"password\": \"{{userPassword}}\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/auth/register",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "auth",
-            "register"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Flight - Search",
-      "event": [
+      "name": "Camunda 7 Process",
+      "description": "Run requests from top to bottom. The search task completion intentionally sends no from/to/date variables: the process has already received flightId on start, so showFlightsDelegate uses that selected flight.",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "const data = pm.response.json();",
-              "if (Array.isArray(data) && data.length > 0 && data[0].id) {",
-              "  pm.collectionVariables.set('flightId', String(data[0].id));",
-              "}"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/flights?from={{fromAirport}}&to={{toAirport}}&date={{flightDate}}&passengers={{passengers}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "flights"
-          ],
-          "query": [
+          "name": "1. Start Purchase Process",
+          "event": [
             {
-              "key": "from",
-              "value": "{{fromAirport}}"
-            },
-            {
-              "key": "to",
-              "value": "{{toAirport}}"
-            },
-            {
-              "key": "date",
-              "value": "{{flightDate}}"
-            },
-            {
-              "key": "passengers",
-              "value": "{{passengers}}"
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('process started', function () { pm.expect(data.processInstanceId).to.be.a('string'); });",
+                  "pm.collectionVariables.set('camundaProcessInstanceId', data.processInstanceId);",
+                  "pm.collectionVariables.set('camundaProcessDefinitionId', data.processDefinitionId);"
+                ]
+              }
             }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Flight - Get By Id",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/flights/{{flightId}}",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "flights",
-            "{{flightId}}"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Internal Purchase - Start",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
-            {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{userLogin}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{userPassword}}",
+                  "type": "string"
+                }
+              ]
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"flightId\": {{flightId}},\n  \"currency\": \"RUB\",\n  \"seatNumber\": \"12A\",\n  \"seatClass\": \"ECONOMY\",\n  \"hasBaggage\": true,\n  \"passengerName\": \"Ivan Ivanov\",\n  \"passengerPassport\": \"1234 567890\",\n  \"provider\": \"internal-bank\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/internal-purchases",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "internal-purchases"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Internal Purchase - Callback (Admin)",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
-            {
-              "key": "username",
-              "value": "{{adminLogin}}",
-              "type": "string"
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightId\": {{flightId}},\n  \"currency\": \"RUB\",\n  \"seatNumber\": \"12A\",\n  \"seatClass\": \"ECONOMY\",\n  \"hasBaggage\": true,\n  \"passengerName\": \"Ivan Ivanov\",\n  \"passengerPassport\": \"1234 567890\",\n  \"provider\": \"internal-bank\"\n}"
             },
-            {
-              "key": "password",
-              "value": "{{adminPassword}}",
-              "type": "string"
+            "url": {
+              "raw": "{{baseUrl}}/api/process/purchase/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "process",
+                "purchase",
+                "start"
+              ]
             }
-          ]
+          },
+          "response": []
         },
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"orderId\": {{orderId}},\n  \"success\": true,\n  \"externalPaymentId\": \"pay_123\",\n  \"failureReason\": null,\n  \"paidAmount\": 7000\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/internal-purchases/callback",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "internal-purchases",
-            "callback"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "External Purchase - Redirect",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
+        {
+          "name": "2. List Active User Tasks",
+          "event": [
             {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const tasks = pm.response.json();",
+                  "const processInstanceId = pm.collectionVariables.get('camundaProcessInstanceId');",
+                  "const task = tasks.find(t => t.processInstanceId === processInstanceId) || tasks[0];",
+                  "pm.test('task found', function () { pm.expect(task).to.exist; });",
+                  "pm.collectionVariables.set('camundaTaskId', task.id);",
+                  "pm.collectionVariables.set('camundaTaskDefinitionKey', task.taskDefinitionKey);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{userLogin}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{userPassword}}",
+                  "type": "string"
+                }
+              ]
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/process/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "process",
+                "tasks"
+              ]
             }
-          ]
+          },
+          "response": []
         },
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"flightId\": {{flightId}},\n  \"currency\": \"RUB\",\n  \"provider\": \"s7\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/external-purchases/redirect",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "external-purchases",
-            "redirect"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "External Purchase - Callback (Admin)",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
-            {
-              "key": "username",
-              "value": "{{adminLogin}}",
-              "type": "string"
+        {
+          "name": "3. Complete Search Task",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{userLogin}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{userPassword}}",
+                  "type": "string"
+                }
+              ]
             },
-            {
-              "key": "password",
-              "value": "{{adminPassword}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"userId\": {{userId}},\n  \"flightId\": {{flightId}},\n  \"currency\": \"RUB\",\n  \"seatNumber\": \"14B\",\n  \"seatClass\": \"BUSINESS\",\n  \"hasBaggage\": true,\n  \"passengerName\": \"Petr Petrov\",\n  \"passengerPassport\": \"4321 098765\",\n  \"passengerEmail\": \"petr@example.com\",\n  \"passengerPhone\": \"+79990001122\",\n  \"externalPaymentId\": \"ext_pay_456\",\n  \"externalBookingId\": \"ext_booking_456\",\n  \"airlineTicketNumber\": \"555-1234567890\",\n  \"paidAmount\": 12000\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/external-purchases/callback",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "external-purchases",
-            "callback"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Order - My Orders",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
-            {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variables\": {}\n}"
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
+            "url": {
+              "raw": "{{baseUrl}}/api/process/tasks/{{camundaTaskId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "process",
+                "tasks",
+                "{{camundaTaskId}}",
+                "complete"
+              ]
             }
-          ]
+          },
+          "response": []
         },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/orders/my",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "orders",
-            "my"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Order - Get By Id",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
+        {
+          "name": "4. Refresh Select Task",
+          "event": [
             {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const tasks = pm.response.json();",
+                  "const processInstanceId = pm.collectionVariables.get('camundaProcessInstanceId');",
+                  "const task = tasks.find(t => t.processInstanceId === processInstanceId && t.taskDefinitionKey === 'Task_User_Select') || tasks.find(t => t.processInstanceId === processInstanceId);",
+                  "pm.test('select task found', function () { pm.expect(task).to.exist; pm.expect(task.taskDefinitionKey).to.eql('Task_User_Select'); });",
+                  "pm.collectionVariables.set('camundaTaskId', task.id);",
+                  "pm.collectionVariables.set('camundaTaskDefinitionKey', task.taskDefinitionKey);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{userLogin}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{userPassword}}",
+                  "type": "string"
+                }
+              ]
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/process/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "process",
+                "tasks"
+              ]
             }
-          ]
+          },
+          "response": []
         },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/orders/{{orderId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "orders",
-            "{{orderId}}"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Order - Cancel",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
+        {
+          "name": "5. Complete Select Task",
+          "event": [
             {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('order created', function () { pm.expect(data.variables.orderId).to.exist; });",
+                  "pm.collectionVariables.set('orderId', String(data.variables.orderId));",
+                  "if (data.variables.paymentSessionId) { pm.collectionVariables.set('paymentSessionId', String(data.variables.paymentSessionId)); }",
+                  "if (data.variables.redirectUrl) { pm.collectionVariables.set('paymentRedirectUrl', String(data.variables.redirectUrl)); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{userLogin}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{userPassword}}",
+                  "type": "string"
+                }
+              ]
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "orders",
-            "{{orderId}}",
-            "cancel"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Ticket - My Tickets",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
-            {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variables\": {\n    \"method\": \"internal\"\n  }\n}"
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
+            "url": {
+              "raw": "{{baseUrl}}/api/process/tasks/{{camundaTaskId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "process",
+                "tasks",
+                "{{camundaTaskId}}",
+                "complete"
+              ]
             }
-          ]
+          },
+          "response": []
         },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/tickets/my",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "tickets",
-            "my"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Ticket - Get By Id",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
-            {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+        {
+          "name": "6. Payment Callback",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{adminLogin}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{adminPassword}}",
+                  "type": "string"
+                }
+              ]
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "tickets",
-            "{{ticketId}}"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Ticket - Download PDF",
-      "request": {
-        "auth": {
-          "type": "basic",
-          "basic": [
-            {
-              "key": "username",
-              "value": "{{userLogin}}",
-              "type": "string"
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": {{orderId}},\n  \"success\": true,\n  \"externalPaymentId\": \"{{paymentId}}\",\n  \"failureReason\": null,\n  \"paidAmount\": {{paidAmount}}\n}"
             },
-            {
-              "key": "password",
-              "value": "{{userPassword}}",
-              "type": "string"
+            "url": {
+              "raw": "{{baseUrl}}/api/internal-purchases/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "internal-purchases",
+                "callback"
+              ]
             }
-          ]
+          },
+          "response": []
         },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/pdf",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "tickets",
-            "{{ticketId}}",
-            "pdf"
-          ]
+        {
+          "name": "7. Check Tasks After Callback",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{userLogin}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{userPassword}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/process/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "process",
+                "tasks"
+              ]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080"
+      "value": "http://localhost:8080/BLPS"
     },
     {
       "key": "adminLogin",
@@ -504,10 +375,6 @@
       "value": "pass1234"
     },
     {
-      "key": "userId",
-      "value": "1"
-    },
-    {
       "key": "flightId",
       "value": "1"
     },
@@ -516,24 +383,28 @@
       "value": "1"
     },
     {
-      "key": "ticketId",
-      "value": "1"
+      "key": "camundaProcessInstanceId",
+      "value": ""
     },
     {
-      "key": "fromAirport",
-      "value": "LED"
+      "key": "camundaProcessDefinitionId",
+      "value": ""
     },
     {
-      "key": "toAirport",
-      "value": "SVO"
+      "key": "camundaTaskId",
+      "value": ""
     },
     {
-      "key": "flightDate",
-      "value": "2026-03-07"
+      "key": "camundaTaskDefinitionKey",
+      "value": ""
     },
     {
-      "key": "passengers",
-      "value": "1"
+      "key": "paymentId",
+      "value": "pay_camunda_001"
+    },
+    {
+      "key": "paidAmount",
+      "value": "7000"
     }
   ]
 }

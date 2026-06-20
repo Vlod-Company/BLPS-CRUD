@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.request.PaymentCallbackRequest;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.controller.dto.response.PaymentRedirectResponse;
-import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
+import ru.gigasigma.blpscrud.service.PaymentCallbackProcessingService;
 import ru.gigasigma.blpscrud.service.internalPurchase.InternalPurchaseService;
 
 @RestController
@@ -30,6 +30,7 @@ import ru.gigasigma.blpscrud.service.internalPurchase.InternalPurchaseService;
 public class InternalPurchaseController {
 
     private final InternalPurchaseService internalPurchaseService;
+    private final PaymentCallbackProcessingService callbackProcessingService;
 
     @PostMapping
     @Operation(summary = "Start internal purchase", description = "Creates an internal order for the authenticated user and redirects to the payment page.")
@@ -43,5 +44,16 @@ public class InternalPurchaseController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(redirect.redirectUrl()))
                 .build();
+    }
+
+    @PostMapping("/callback")
+    @Operation(summary = "Handle internal payment callback", description = "Correlates payment result to Camunda message PaymentReceived or falls back to the legacy purchase handler.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Callback accepted"),
+            @ApiResponse(responseCode = "400", description = "Invalid callback payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
+    })
+    public ResponseEntity<Void> callback(@RequestBody @Valid PaymentCallbackRequest request) {
+        callbackProcessingService.handleCallback(request);
+        return ResponseEntity.accepted().build();
     }
 }
