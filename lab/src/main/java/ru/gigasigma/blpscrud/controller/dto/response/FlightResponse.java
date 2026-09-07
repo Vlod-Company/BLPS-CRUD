@@ -27,7 +27,7 @@ public record FlightResponse(
         BigDecimal basePrice,
         @Schema(description = "Number of seats still available", example = "37")
         Integer availableSeats
-) {
+) implements java.io.Serializable {
     public static FlightResponse fromEntity(Flight flight) {
         return new FlightResponse(
                 flight.getId(),

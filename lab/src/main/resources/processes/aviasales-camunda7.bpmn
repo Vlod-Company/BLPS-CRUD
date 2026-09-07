@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.16.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.23.0">
   <bpmn:message id="Message_PaymentReceived" name="PaymentReceived" />
-  <bpmn:process id="Process_Main" processType="None" isClosed="false" isExecutable="true" camunda:historyTimeToLive="30">
+  <bpmn:process id="Process_Main" name="Покупка авиабилета" processType="None" isClosed="false" isExecutable="true" camunda:historyTimeToLive="30">
+    <bpmn:extensionElements>
+      <camunda:executionListener event="start" delegateExpression="${initializePurchaseListener}" />
+    </bpmn:extensionElements>
     <bpmn:laneSet id="LaneSet_Main">
       <bpmn:lane id="Lane_User" name="Пользователь / ROLE_USER">
         <bpmn:flowNodeRef>StartEvent_User</bpmn:flowNodeRef>
@@ -155,6 +158,7 @@
     <bpmn:userTask id="Task_User_Search" name="Ввод параметров поиска">
       <bpmn:extensionElements>
         <camunda:taskListener event="create" delegateExpression="${assignProcessOwnerTaskListener}" />
+        <camunda:taskListener event="complete" delegateExpression="${validatePurchaseFormListener}" />
         <camunda:formData>
           <camunda:formField id="flightId" label="ID выбранного рейса" type="long" />
           <camunda:formField id="from" label="Аэропорт отправления" type="string" />
@@ -169,22 +173,28 @@
     <bpmn:userTask id="Task_User_Select" name="Клик &quot;Купить&quot;">
       <bpmn:extensionElements>
         <camunda:taskListener event="create" delegateExpression="${assignProcessOwnerTaskListener}" />
+        <camunda:taskListener event="complete" delegateExpression="${validatePurchaseFormListener}" />
         <camunda:formData>
           <camunda:formField id="method" label="Способ покупки" type="enum" defaultValue="internal">
             <camunda:value id="internal" name="Покупка в системе" />
             <camunda:value id="redirect" name="Редирект к авиакомпании" />
           </camunda:formField>
+          <camunda:formField id="availableFlightsSummary" label="Найденные рейсы" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" />
+            </camunda:validation>
+          </camunda:formField>
           <camunda:formField id="flightId" label="ID рейса" type="long" />
-          <camunda:formField id="currency" label="Валюта" type="string" />
+          <camunda:formField id="currency" label="Валюта" type="string" defaultValue="RUB" />
           <camunda:formField id="seatNumber" label="Место" type="string" />
-          <camunda:formField id="seatClass" label="Класс места" type="enum">
+          <camunda:formField id="seatClass" label="Класс места" type="enum" defaultValue="ECONOMY">
             <camunda:value id="ECONOMY" name="ECONOMY" />
             <camunda:value id="BUSINESS" name="BUSINESS" />
           </camunda:formField>
           <camunda:formField id="hasBaggage" label="Багаж" type="boolean" />
           <camunda:formField id="passengerName" label="ФИО пассажира" type="string" />
           <camunda:formField id="passengerPassport" label="Паспорт пассажира" type="string" />
-          <camunda:formField id="provider" label="Платёжный провайдер" type="string" />
+          <camunda:formField id="provider" label="Платёжный провайдер" type="string" defaultValue="internal-bank" />
         </camunda:formData>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0eqq1xv</bpmn:incoming>

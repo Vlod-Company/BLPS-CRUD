@@ -113,6 +113,9 @@ public class CamundaIdentitySyncService {
     private void ensureTasklistAccess(String groupId) {
         ensureGroupAuthorization(groupId, Resources.APPLICATION, TASKLIST_APP, Permissions.ACCESS);
         ensureGroupAuthorization(groupId, Resources.FILTER, Authorization.ANY, Permissions.READ);
+        ensureGroupAuthorization(groupId, Resources.PROCESS_DEFINITION, "Process_Main",
+                Permissions.READ, Permissions.CREATE_INSTANCE);
+        ensureGroupAuthorization(groupId, Resources.PROCESS_INSTANCE, Authorization.ANY, Permissions.CREATE);
     }
 
     private void ensureCockpitAccess(String groupId) {

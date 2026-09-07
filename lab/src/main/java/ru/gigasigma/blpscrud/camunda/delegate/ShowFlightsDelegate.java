@@ -5,6 +5,7 @@ import static ru.gigasigma.blpscrud.camunda.CamundaVariables.localDateValue;
 import static ru.gigasigma.blpscrud.camunda.CamundaVariables.stringValue;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -24,6 +25,9 @@ public class ShowFlightsDelegate implements JavaDelegate {
     public void execute(DelegateExecution execution) {
         Long selectedFlightId = longValue(execution, "flightId");
         if (selectedFlightId != null) {
+            var flight = FlightResponse.fromEntity(flightService.getById(selectedFlightId));
+            execution.setVariable("availableFlights", List.of(flight));
+            execution.setVariable("availableFlightsSummary", summarize(List.of(flight)));
             execution.setVariable("hasAvailableFlights", true);
             execution.setVariable("availableFlightCount", 1);
             log.info("Camunda flight search skipped because selected flight is already provided. flightId={}", selectedFlightId);
@@ -54,6 +58,14 @@ public class ShowFlightsDelegate implements JavaDelegate {
         execution.setVariable("hasAvailableFlights", !flights.isEmpty());
         execution.setVariable("availableFlightCount", flights.size());
         execution.setVariable("availableFlights", flights);
+        execution.setVariable("availableFlightsSummary", summarize(flights));
         log.info("Camunda flight search completed. from={}, to={}, count={}", from, to, flights.size());
+    }
+
+    private String summarize(List<FlightResponse> flights) {
+        return flights.stream().map(flight -> "ID " + flight.id() + ": " + flight.flightNumber()
+                + " " + flight.departureAirport() + " - " + flight.arrivalAirport()
+                + " " + flight.departureTime() + ", " + flight.basePrice())
+                .collect(Collectors.joining("; "));
     }
 }
