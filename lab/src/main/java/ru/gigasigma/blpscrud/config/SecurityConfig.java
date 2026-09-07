@@ -1,9 +1,5 @@
 package ru.gigasigma.blpscrud.config;
 
-import java.util.Map;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,11 +7,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.jaas.AuthorityGranter;
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider;
-import org.springframework.security.authentication.jaas.JaasAuthenticationProvider;
 import org.springframework.security.authentication.jaas.memory.InMemoryConfiguration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,6 +27,10 @@ import ru.gigasigma.blpscrud.security.XmlUserLoginModule;
 import ru.gigasigma.blpscrud.security.XmlUserStore;
 import ru.gigasigma.blpscrud.service.CIDRService;
 import ru.gigasigma.blpscrud.service.ClientIpResolver;
+
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
+import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
@@ -87,8 +85,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/camunda/**"
+                                "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/flights", "/api/flights/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

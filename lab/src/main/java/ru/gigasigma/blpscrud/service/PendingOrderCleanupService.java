@@ -1,9 +1,10 @@
 package ru.gigasigma.blpscrud.service;
 
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.gigasigma.blpscrud.enums.OrderStatus;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +19,8 @@ public class PendingOrderCleanupService {
                 .filter(order -> order.createdAt().plusMinutes(5).isBefore(LocalDateTime.now()))
                 .toList();
 
-        expiredOrders.forEach(order -> orderService.cancelOrder(order.id()));
+        expiredOrders.forEach(order -> orderService.cancelOrder(order.
+                id()));
         return expiredOrders.size();
     }
 }

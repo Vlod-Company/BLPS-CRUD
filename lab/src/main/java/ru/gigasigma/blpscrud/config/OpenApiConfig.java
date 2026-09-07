@@ -9,10 +9,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.security.SecurityScheme.In;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -47,22 +43,4 @@ import org.springframework.context.annotation.Configuration;
 )
 public class OpenApiConfig {
 
-    @Bean
-    public OpenAPI blpsOpenApi() {
-        return new OpenAPI()
-                .components(new Components().addSecuritySchemes(
-                        "basicAuth",
-                        new io.swagger.v3.oas.models.security.SecurityScheme()
-                                .type(io.swagger.v3.oas.models.security.SecurityScheme.Type.HTTP)
-                                .scheme("basic")
-                                .in(In.HEADER)
-                ))
-                .addSecurityItem(new io.swagger.v3.oas.models.security.SecurityRequirement().addList("basicAuth"))
-                .info(new io.swagger.v3.oas.models.info.Info()
-                        .title("BLPS CRUD API")
-                        .version("v1")
-                        .description("Runtime-generated OpenAPI documentation for the BLPS CRUD service.")
-                        .contact(new io.swagger.v3.oas.models.info.Contact().name("BLPS CRUD"))
-                        .license(new io.swagger.v3.oas.models.info.License().name("Internal use")));
-    }
 }

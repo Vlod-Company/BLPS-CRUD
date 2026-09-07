@@ -1,15 +1,13 @@
 package ru.gigasigma.blpscrud.camunda;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.enums.SeatClass;
 
-public final class CamundaVariables {
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
-    private CamundaVariables() {
-    }
+public class CamundaVariables {
 
     public static Long longValue(DelegateExecution execution, String name) {
         Object value = execution.getVariable(name);

@@ -1,10 +1,11 @@
 package ru.gigasigma.blpscrud.service;
 
-import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.gigasigma.blpscrud.enums.SeatClass;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor

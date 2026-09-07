@@ -6,10 +6,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
-import ru.gigasigma.blpscrud.controller.dto.request.UserRequest;
 import ru.gigasigma.blpscrud.repository.NetworkPoliticsRepository;
 
 import javax.crypto.SecretKey;

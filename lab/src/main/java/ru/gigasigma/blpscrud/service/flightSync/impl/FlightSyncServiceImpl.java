@@ -1,23 +1,20 @@
 package ru.gigasigma.blpscrud.service.flightSync.impl;
 
 import jakarta.persistence.EntityNotFoundException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.annotation.Transactional;
-import ru.gigasigma.blpscrud.controller.dto.response.PaymentRedirectResponse;
 import ru.gigasigma.blpscrud.entity.Airline;
 import ru.gigasigma.blpscrud.entity.Flight;
-import ru.gigasigma.blpscrud.entity.Order;
-import ru.gigasigma.blpscrud.enums.PaymentMethod;
 import ru.gigasigma.blpscrud.integration.flight.ExternalFlightGateway;
 import ru.gigasigma.blpscrud.integration.flight.ExternalFlightSnapshot;
 import ru.gigasigma.blpscrud.repository.AirlineRepository;
 import ru.gigasigma.blpscrud.repository.FlightRepository;
 import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
 import ru.gigasigma.blpscrud.transaction.ProgrammaticTransaction;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor

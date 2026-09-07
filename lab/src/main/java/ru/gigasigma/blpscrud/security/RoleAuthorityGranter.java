@@ -1,9 +1,10 @@
 package ru.gigasigma.blpscrud.security;
 
+import org.springframework.security.authentication.jaas.AuthorityGranter;
+
 import java.security.Principal;
 import java.util.Collections;
 import java.util.Set;
-import org.springframework.security.authentication.jaas.AuthorityGranter;
 
 public class RoleAuthorityGranter implements AuthorityGranter {
 

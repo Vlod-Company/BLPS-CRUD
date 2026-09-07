@@ -1,13 +1,5 @@
 package ru.gigasigma.blpscrud.service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.text.Normalizer;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -19,6 +11,15 @@ import org.springframework.stereotype.Service;
 import ru.gigasigma.blpscrud.entity.Flight;
 import ru.gigasigma.blpscrud.entity.Order;
 import ru.gigasigma.blpscrud.entity.Ticket;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.text.Normalizer;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 public class TicketPdfService {

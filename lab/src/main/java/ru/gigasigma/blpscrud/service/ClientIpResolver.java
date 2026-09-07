@@ -1,7 +1,6 @@
 package ru.gigasigma.blpscrud.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
