@@ -2,7 +2,11 @@ package ru.gigasigma.blpscrud.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.camunda.bpm.engine.AuthorizationService;
 import org.camunda.bpm.engine.IdentityService;
+import org.camunda.bpm.engine.authorization.Authorization;
+import org.camunda.bpm.engine.authorization.Permissions;
+import org.camunda.bpm.engine.authorization.Resources;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.User;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,13 +21,17 @@ import ru.gigasigma.blpscrud.security.XmlUserStore;
 @Slf4j
 public class CamundaIdentitySyncService {
 
-    public static final String ADMIN_GROUP = "ROLE_ADMIN";
-    public static final String USER_GROUP = "ROLE_USER";
+    public static final String ADMIN_GROUP = "roleAdmin";
+    public static final String USER_GROUP = "roleUser";
 
-    private static final String CAMUNDA_ADMIN_GROUP = "camunda-admin";
     private static final String WORKFLOW_GROUP_TYPE = "WORKFLOW";
+    private static final String APP_ADMIN_ROLE = "ROLE_ADMIN";
+    private static final String APP_USER_ROLE = "ROLE_USER";
+    private static final String TASKLIST_APP = "tasklist";
+    private static final String COCKPIT_APP = "cockpit";
 
     private final IdentityService identityService;
+    private final AuthorizationService authorizationService;
     private final XmlUserStore xmlUserStore;
 
     @Value("${camunda.identity.default-user-password:password}")
@@ -49,16 +57,17 @@ public class CamundaIdentitySyncService {
         String role = normalizeRole(account.role());
         ensureUser(account.login(), password, account.fullName(), updatePassword);
         ensureMembership(account.login(), role);
-        if (ADMIN_GROUP.equals(role)) {
-            ensureMembership(account.login(), CAMUNDA_ADMIN_GROUP);
-        }
         log.info("Synchronized Camunda identity. user={}, group={}", account.login(), role);
     }
 
     private void ensureGroups() {
-        ensureGroup(USER_GROUP, "Application users");
-        ensureGroup(ADMIN_GROUP, "Application administrators");
-        ensureGroup(CAMUNDA_ADMIN_GROUP, "Camunda administrators");
+        ensureGroup(USER_GROUP, APP_USER_ROLE);
+        ensureGroup(ADMIN_GROUP, APP_ADMIN_ROLE);
+        ensureTasklistAccess(USER_GROUP);
+        ensureTasklistAccess(ADMIN_GROUP);
+        ensureCockpitAccess(ADMIN_GROUP);
+        removeGroupAuthorization(USER_GROUP, Resources.TASK, Authorization.ANY);
+        ensureTaskAccess(ADMIN_GROUP);
     }
 
     private void ensureGroup(String groupId, String name) {
@@ -101,10 +110,76 @@ public class CamundaIdentitySyncService {
         identityService.createMembership(userId, groupId);
     }
 
+    private void ensureTasklistAccess(String groupId) {
+        ensureGroupAuthorization(groupId, Resources.APPLICATION, TASKLIST_APP, Permissions.ACCESS);
+        ensureGroupAuthorization(groupId, Resources.FILTER, Authorization.ANY, Permissions.READ);
+    }
+
+    private void ensureCockpitAccess(String groupId) {
+        ensureGroupAuthorization(groupId, Resources.APPLICATION, COCKPIT_APP, Permissions.ACCESS);
+    }
+
+    private void ensureTaskAccess(String groupId) {
+        ensureGroupAuthorization(groupId, Resources.TASK, Authorization.ANY, Permissions.READ, Permissions.TASK_WORK);
+    }
+
+    private void removeGroupAuthorization(String groupId, Resources resource, String resourceId) {
+        authorizationService.createAuthorizationQuery()
+                .groupIdIn(groupId)
+                .resourceType(resource)
+                .resourceId(resourceId)
+                .list()
+                .forEach(authorization -> {
+                    authorizationService.deleteAuthorization(authorization.getId());
+                    log.info("Removed broad Camunda authorization. group={}, resource={}, resourceId={}",
+                            groupId, resource, resourceId);
+                });
+    }
+
+    private void ensureGroupAuthorization(
+            String groupId,
+            Resources resource,
+            String resourceId,
+            Permissions... permissions
+    ) {
+        Authorization existing = authorizationService.createAuthorizationQuery()
+                .groupIdIn(groupId)
+                .resourceType(resource)
+                .resourceId(resourceId)
+                .singleResult();
+        if (existing != null) {
+            boolean changed = false;
+            for (Permissions permission : permissions) {
+                if (!existing.isPermissionGranted(permission)) {
+                    existing.addPermission(permission);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                authorizationService.saveAuthorization(existing);
+            }
+            return;
+        }
+
+        Authorization authorization = authorizationService.createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
+        authorization.setGroupId(groupId);
+        authorization.setResource(resource);
+        authorization.setResourceId(resourceId);
+        for (Permissions permission : permissions) {
+            authorization.addPermission(permission);
+        }
+        authorizationService.saveAuthorization(authorization);
+    }
+
     private String normalizeRole(String role) {
         if (role == null || role.isBlank()) {
             return USER_GROUP;
         }
-        return role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        String appRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        return switch (appRole) {
+            case APP_ADMIN_ROLE -> ADMIN_GROUP;
+            case APP_USER_ROLE -> USER_GROUP;
+            default -> appRole.replaceAll("[^A-Za-z0-9]", "");
+        };
     }
 }

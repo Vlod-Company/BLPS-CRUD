@@ -11,7 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.engine.task.Task;
+import org.camunda.bpm.engine.task.TaskQuery;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +48,7 @@ public class CamundaProcessController {
     public CamundaProcessStartResponse startPurchase(@RequestBody @Valid StartPurchaseRequest request) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("userId", currentUserService.getCurrentUserId());
+        variables.put("processOwnerLogin", currentUserService.getCurrentLogin());
         variables.put("flightId", request.flightId());
         variables.put("currency", request.currency());
         variables.put("seatNumber", request.seatNumber());
@@ -68,9 +73,12 @@ public class CamundaProcessController {
     @GetMapping("/tasks")
     @Operation(summary = "List active Camunda user tasks")
     public List<CamundaTaskResponse> tasks() {
-        return taskService.createTaskQuery()
-                .active()
-                .orderByTaskCreateTime()
+        TaskQuery query = taskService.createTaskQuery().active();
+        if (!currentUserService.isAdmin()) {
+            query.taskAssignee(currentUserService.getCurrentLogin());
+        }
+
+        return query.orderByTaskCreateTime()
                 .desc()
                 .list()
                 .stream()
@@ -84,11 +92,14 @@ public class CamundaProcessController {
             @PathVariable String taskId,
             @RequestBody(required = false) CompleteCamundaTaskRequest request
     ) {
-        var task = taskService.createTaskQuery()
+        Task task = taskService.createTaskQuery()
                 .taskId(taskId)
                 .singleResult();
         if (task == null) {
             throw new jakarta.persistence.EntityNotFoundException("Camunda task not found: " + taskId);
+        }
+        if (!currentUserService.isAdmin() && !currentUserService.getCurrentLogin().equals(task.getAssignee())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot complete another user's Camunda task");
         }
 
         String processInstanceId = task.getProcessInstanceId();

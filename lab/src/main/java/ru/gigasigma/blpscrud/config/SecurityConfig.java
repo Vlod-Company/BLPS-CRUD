@@ -10,7 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.jaas.AuthorityGranter;
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider;
 import org.springframework.security.authentication.jaas.JaasAuthenticationProvider;
@@ -66,13 +68,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, DefaultJaasAuthenticationProvider jaasAuthenticationProvider, JwtAuthenticationProvider jwtAuthenticationProvider, CIDRService cidrService, ClientIpResolver clientIpResolver) throws Exception {
+    public AuthenticationManager authenticationManager(DefaultJaasAuthenticationProvider jaasAuthenticationProvider) {
+        return new ProviderManager(jaasAuthenticationProvider);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager, JwtAuthenticationProvider jwtAuthenticationProvider, CIDRService cidrService, ClientIpResolver clientIpResolver) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
+                .authenticationManager(authenticationManager)
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(jaasAuthenticationProvider)
                 .addFilterBefore(new IpWhiteListFilter(cidrService, clientIpResolver), AuthenticationFilter.class)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtAuthenticationProvider, clientIpResolver), IpWhiteListFilter.class)
                 .authorizeHttpRequests(authorize -> authorize

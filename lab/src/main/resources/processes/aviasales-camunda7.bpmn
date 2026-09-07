@@ -152,8 +152,9 @@
     <bpmn:serviceTask id="Activity_16ay3tl" name="Создание сделки по заказу" camunda:delegateExpression="${createCrmDealDelegate}">
       <bpmn:incoming>Flow_0aw1atc</bpmn:incoming>
     </bpmn:serviceTask>
-    <bpmn:userTask id="Task_User_Search" name="Ввод параметров поиска" camunda:candidateGroups="ROLE_USER,ROLE_ADMIN">
+    <bpmn:userTask id="Task_User_Search" name="Ввод параметров поиска">
       <bpmn:extensionElements>
+        <camunda:taskListener event="create" delegateExpression="${assignProcessOwnerTaskListener}" />
         <camunda:formData>
           <camunda:formField id="flightId" label="ID выбранного рейса" type="long" />
           <camunda:formField id="from" label="Аэропорт отправления" type="string" />
@@ -165,8 +166,9 @@
       <bpmn:incoming>Flow_1v9k2nj</bpmn:incoming>
       <bpmn:outgoing>Flow_06spb9e</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:userTask id="Task_User_Select" name="Клик &quot;Купить&quot;" camunda:candidateGroups="ROLE_USER,ROLE_ADMIN">
+    <bpmn:userTask id="Task_User_Select" name="Клик &quot;Купить&quot;">
       <bpmn:extensionElements>
+        <camunda:taskListener event="create" delegateExpression="${assignProcessOwnerTaskListener}" />
         <camunda:formData>
           <camunda:formField id="method" label="Способ покупки" type="enum" defaultValue="internal">
             <camunda:value id="internal" name="Покупка в системе" />
