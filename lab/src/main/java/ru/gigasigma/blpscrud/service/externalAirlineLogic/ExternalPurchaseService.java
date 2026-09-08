@@ -7,5 +7,7 @@ import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 
 public interface ExternalPurchaseService {
     RedirectResponse generateRedirectLink(ExternalRedirectRequest request);
+    RedirectResponse generateRedirectLink(ExternalRedirectRequest request, Long userId);
     WorkflowResult completeExternalBooking(ExternalBookingCallbackRequest request);
+    WorkflowResult completeExternalBookingForProcess(ExternalBookingCallbackRequest request);
 }

@@ -2,6 +2,7 @@ package ru.gigasigma.blpscrud.controller.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.camunda.bpm.engine.task.Task;
 
 @Schema(name = "CamundaTaskResponse", description = "Camunda user task")
@@ -24,7 +25,7 @@ public record CamundaTaskResponse(
                 task.getProcessDefinitionId(),
                 task.getAssignee(),
                 task.getCreateTime() == null ? null : task.getCreateTime().toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime()
         );
     }

@@ -1,0 +1,26 @@
+<form name="paymentLinkForm" role="form">
+  <div class="alert alert-danger" ng-if="linkError" role="alert">{{linkError}}</div>
+  <a ng-if="paymentUrl" ng-href="{{paymentUrl}}" target="_blank" rel="noopener noreferrer">
+    Перейти к оплате
+  </a>
+  <script cam-script type="text/form-script">
+    camForm.on('form-loaded', function () {
+      camForm.variableManager.fetchVariable('redirectUrl');
+    });
+    camForm.on('variables-fetched', function () {
+      var value = camForm.variableManager.variableValue('redirectUrl');
+      try {
+        var url = new URL(value);
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+          throw new Error('Invalid payment URL');
+        }
+        $scope.paymentUrl = url.href;
+      } catch (error) {
+        $scope.linkError = 'Ссылка оплаты недоступна.';
+      }
+    });
+    camForm.on('submit', function (event) {
+      if (!$scope.paymentUrl) { event.submitPrevented = true; }
+    });
+  </script>
+</form>

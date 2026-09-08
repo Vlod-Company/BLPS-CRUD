@@ -15,11 +15,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.request.ExternalBookingCallbackRequest;
 import ru.gigasigma.blpscrud.controller.dto.request.ExternalRedirectRequest;
 import ru.gigasigma.blpscrud.controller.dto.response.RedirectResponse;
 import ru.gigasigma.blpscrud.service.FlightService;
+import ru.gigasigma.blpscrud.service.ExternalProcessCallbackService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.service.externalAirlineLogic.ExternalPurchaseService;
 import ru.gigasigma.blpscrud.util.ExternalPurchaseServiceFactory;
@@ -33,6 +35,7 @@ public class ExternalPurchaseController {
 
     private final ExternalPurchaseServiceFactory externalPurchaseServiceFactory;
     private final FlightService flightService;
+    private final ExternalProcessCallbackService processCallbacks;
 
     @PostMapping("/redirect")
     @Operation(summary = "Generate external purchase redirect", description = "Creates an external booking session for the authenticated user and redirects to the provider page.")
@@ -56,7 +59,11 @@ public class ExternalPurchaseController {
             @ApiResponse(responseCode = "400", description = "Invalid callback payload", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Flight or provider not found", content = @Content(schema = @Schema(implementation = ApiExceptionHandler.ApiErrorResponse.class)))
     })
-    public WorkflowResult callback(@RequestBody @Valid ExternalBookingCallbackRequest request) {
+    public WorkflowResult callback(@RequestBody @Valid ExternalBookingCallbackRequest request,
+            @RequestParam(required = false) String session) {
+        if (session != null) {
+            return processCallbacks.complete(session, request);
+        }
         String iata = flightService.getById(request.flightId()).getAirline().getIataCode();
         ExternalPurchaseService service = externalPurchaseServiceFactory.getService(iata);
         return service.completeExternalBooking(request);

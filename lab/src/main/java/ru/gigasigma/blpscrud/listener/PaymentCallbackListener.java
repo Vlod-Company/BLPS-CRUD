@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.jms.ConnectionFactory;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +22,8 @@ import ru.gigasigma.blpscrud.service.PaymentCallbackProcessingService;
 public class PaymentCallbackListener {
 
     private final PaymentCallbackProcessingService callbackProcessingService;
+    private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     @PostConstruct
     public void init() {
@@ -30,6 +34,7 @@ public class PaymentCallbackListener {
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory connectionFactory) {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
+        factory.setSessionTransacted(true);
         factory.setMessageConverter(new SimpleMessageConverter());
         return factory;
     }
@@ -38,9 +43,15 @@ public class PaymentCallbackListener {
     public void handleCallback(
             String json
     ) throws JsonProcessingException {
-        var req =
-                new ObjectMapper().readValue(json, PaymentCallbackRequest.class);
-        log.info("{}", req);
+        var req = objectMapper.readValue(json, PaymentCallbackRequest.class);
+        if (req == null) {
+            throw new IllegalArgumentException("Payment callback payload is required");
+        }
+        var violations = validator.validate(req);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+        log.info("Validated payment callback for orderId={}", req.orderId());
         callbackProcessingService.handleCallback(req);
     }
 }

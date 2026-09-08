@@ -1,6 +1,7 @@
 package ru.gigasigma.blpscrud.controller.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import ru.gigasigma.blpscrud.entity.Flight;
@@ -27,7 +28,7 @@ public record FlightResponse(
         BigDecimal basePrice,
         @Schema(description = "Number of seats still available", example = "37")
         Integer availableSeats
-) implements java.io.Serializable {
+) implements Serializable {
     public static FlightResponse fromEntity(Flight flight) {
         return new FlightResponse(
                 flight.getId(),

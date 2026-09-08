@@ -18,7 +18,6 @@ public class InitializePurchaseListener implements ExecutionListener {
 
     @Override
     public void notify(DelegateExecution execution) {
-        // Tasklist authenticates with Camunda; the application API uses Spring Security.
         var authentication = identityService.getCurrentAuthentication();
         String login = authentication == null
                 ? currentUserService.getCurrentLogin() : authentication.getUserId();

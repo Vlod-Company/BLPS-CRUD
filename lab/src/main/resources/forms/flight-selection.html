@@ -1,0 +1,54 @@
+<form name="flightSelectionForm" role="form">
+  <div class="alert alert-danger" ng-if="loadError" role="alert">{{loadError}}</div>
+  <div class="form-group">
+    <label for="suitable-flight">Есть подходящий рейс</label>
+    <select id="suitable-flight" class="form-control" cam-variable-name="hasSuitableFlight"
+            cam-variable-type="String" ng-model="suitable" required>
+      <option value="">Выберите ответ</option>
+      <option value="true" ng-disabled="!flights.length">Да</option>
+      <option value="false">Нет</option>
+    </select>
+  </div>
+  <div class="form-group" ng-show="suitable === 'true'">
+    <label for="selected-flight">Рейс</label>
+    <select id="selected-flight" class="form-control" cam-variable-name="flightId"
+            cam-variable-type="Long" ng-model="selectedFlight"
+            ng-options="flight.id as flight.label for flight in flights"
+            ng-required="suitable === 'true'" ng-disabled="suitable !== 'true'">
+      <option value="">Выберите рейс</option>
+    </select>
+  </div>
+  <script cam-script type="text/form-script">
+    var manager = camForm.variableManager;
+    $scope.flights = [];
+    camForm.on('form-loaded', function () {
+      manager.fetchVariable('availableFlightsJson');
+    });
+    camForm.on('variables-fetched', function () {
+      try {
+        var flights = JSON.parse(manager.variableValue('availableFlightsJson'));
+        if (!Array.isArray(flights)) { throw new Error('Invalid flight list'); }
+        $scope.flights = flights.map(function (flight) {
+          return {
+            id: flight.id,
+            label: flight.flightNumber + ' | ' + flight.departureAirport + ' - '
+              + flight.arrivalAirport + ' | ' + flight.departureTime + ' | ' + flight.basePrice
+          };
+        });
+      } catch (error) {
+        $scope.loadError = 'Не удалось загрузить найденные рейсы.';
+      }
+    });
+    camForm.on('submit', function (event) {
+      var validSelection = $scope.flights.some(function (flight) {
+        return flight.id === Number($scope.selectedFlight);
+      });
+      if ($scope.loadError || ($scope.suitable !== 'true' && $scope.suitable !== 'false')
+          || ($scope.suitable === 'true' && !validSelection)) {
+        event.submitPrevented = true;
+        return;
+      }
+      if ($scope.suitable === 'false') { manager.variableValue('flightId', null); }
+    });
+  </script>
+</form>

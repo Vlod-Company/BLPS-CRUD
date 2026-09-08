@@ -28,6 +28,11 @@ public class PaymentCallbackProcessingService {
                     .correlate();
             log.info("Payment callback correlated to Camunda process. orderId={}", request.orderId());
         } catch (MismatchingMessageCorrelationException e) {
+            if (runtimeService.createProcessInstanceQuery()
+                    .processDefinitionKey("Process_Main")
+                    .variableValueEquals("orderId", request.orderId()).count() > 0) {
+                throw new IllegalStateException("Purchase process is not ready for the payment callback", e);
+            }
             log.info("No Camunda process waits for payment callback. Falling back to legacy handler. orderId={}", request.orderId());
             internalPurchaseService.handlePaymentCallback(request);
         }
