@@ -9,13 +9,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import ru.gigasigma.blpscrud.camunda.PurchaseDeploymentBindings;
 import ru.gigasigma.blpscrud.controller.dto.request.ExternalBookingCallbackRequest;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 
 @Service
 @RequiredArgsConstructor
 public class ExternalProcessCallbackService {
+    private static final String REDIRECT_MESSAGE = "RedirectReceived";
+
     private final RuntimeService runtimeService;
     private final ObjectMapper objectMapper;
 
@@ -25,7 +26,7 @@ public class ExternalProcessCallbackService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External booking session is required");
         }
         try {
-            var result = runtimeService.createMessageCorrelation(PurchaseDeploymentBindings.REDIRECT_MESSAGE)
+            var result = runtimeService.createMessageCorrelation(REDIRECT_MESSAGE)
                     .processInstanceVariableEquals("externalSessionId", session)
                     .processInstanceVariableEquals("userId", request.userId())
                     .processInstanceVariableEquals("flightId", request.flightId())

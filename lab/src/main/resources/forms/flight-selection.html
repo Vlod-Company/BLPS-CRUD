@@ -13,8 +13,8 @@
     <label for="selected-flight">Рейс</label>
     <select id="selected-flight" class="form-control" cam-variable-name="flightId"
             cam-variable-type="Long" ng-model="selectedFlight"
-            ng-options="flight.id as flight.label for flight in flights"
             ng-required="suitable === 'true'" ng-disabled="suitable !== 'true'">
+      <option ng-repeat="flight in flights" value="{{flight.id}}">{{flight.label}}</option>
       <option value="">Выберите рейс</option>
     </select>
   </div>
@@ -30,7 +30,7 @@
         if (!Array.isArray(flights)) { throw new Error('Invalid flight list'); }
         $scope.flights = flights.map(function (flight) {
           return {
-            id: flight.id,
+            id: String(flight.id),
             label: flight.flightNumber + ' | ' + flight.departureAirport + ' - '
               + flight.arrivalAirport + ' | ' + flight.departureTime + ' | ' + flight.basePrice
           };
@@ -40,15 +40,16 @@
       }
     });
     camForm.on('submit', function (event) {
+      var selectedId = Number($scope.selectedFlight);
       var validSelection = $scope.flights.some(function (flight) {
-        return flight.id === Number($scope.selectedFlight);
+        return Number(flight.id) === selectedId;
       });
       if ($scope.loadError || ($scope.suitable !== 'true' && $scope.suitable !== 'false')
           || ($scope.suitable === 'true' && !validSelection)) {
         event.submitPrevented = true;
         return;
       }
-      if ($scope.suitable === 'false') { manager.variableValue('flightId', null); }
+      manager.variableValue('flightId', $scope.suitable === 'true' ? String(selectedId) : null);
     });
   </script>
 </form>

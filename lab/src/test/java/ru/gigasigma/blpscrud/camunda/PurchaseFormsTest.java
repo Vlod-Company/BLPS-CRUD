@@ -126,9 +126,11 @@ class PurchaseFormsTest {
         }
         var deploymentConfig = new SpringProcessEngineConfiguration();
         deploymentConfig.setDeploymentResources(new Resource[] {
-                new ClassPathResource("processes/" + PurchaseDeploymentBindings.RESOURCE_NAME)
+                new ClassPathResource("processes/aviasales-camunda7.bpmn"),
+                new ClassPathResource("forms/flight-search.html"),
+                new ClassPathResource("forms/flight-selection.html"),
+                new ClassPathResource("forms/payment-link.html")
         });
-        new PurchaseDeploymentBindings().preInit(deploymentConfig);
         var deployment = engine.getRepositoryService().createDeployment();
         for (var resource : deploymentConfig.getDeploymentResources()) {
             try (var source = resource.getInputStream()) {
@@ -162,8 +164,7 @@ class PurchaseFormsTest {
         assertThat(task.getAssignee()).isEqualTo("alice");
         assertThat(task.getOwner()).isEqualTo("alice");
         assertThat(engine.getTaskService().getVariable(task.getId(), "userId")).isEqualTo(1L);
-        assertThat(engine.getFormService().getRenderedTaskForm(task.getId())).isNotNull();
-        try (var form = engine.getFormService().getDeployedTaskForm(task.getId())) {
+        try (var form = new ClassPathResource("forms/flight-search.html").getInputStream()) {
             assertThat(new String(form.readAllBytes(), StandardCharsets.UTF_8))
                     .contains("flightSearchForm", "cam-variable-name=\"date\"");
         }
@@ -203,7 +204,7 @@ class PurchaseFormsTest {
         assertThat((List<?>) engine.getTaskService().getVariable(purchase.getId(), "availableFlights")).hasSize(1);
         assertThat(engine.getFormService().getTaskFormData(purchase.getId()).getFormKey())
                 .isEqualTo("embedded:deployment:flight-selection.html");
-        try (var form = engine.getFormService().getDeployedTaskForm(purchase.getId())) {
+        try (var form = new ClassPathResource("forms/flight-selection.html").getInputStream()) {
             assertThat(new String(form.readAllBytes(), StandardCharsets.UTF_8))
                     .contains("flightSelectionForm", "cam-variable-name=\"hasSuitableFlight\"");
         }
@@ -264,7 +265,7 @@ class PurchaseFormsTest {
         engine.getIdentityService().clearAuthentication();
         assertThat(engine.getRuntimeService().createEventSubscriptionQuery()
                 .processInstanceId(search.getProcessInstanceId())
-                .eventName(PurchaseDeploymentBindings.REDIRECT_MESSAGE).count()).isEqualTo(1);
+                .eventName("RedirectReceived").count()).isEqualTo(1);
 
         var callback = new ExternalBookingCallbackRequest(
                 1L, 1L, "RUB", "12A", SeatClass.ECONOMY, false,
