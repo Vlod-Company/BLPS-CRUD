@@ -15,9 +15,7 @@ public record NetworkPoliticsDto(
         String name,
 
         String description,
-
         List<String> roles,
-
         List<AddressDto> addresses
 ) {
 

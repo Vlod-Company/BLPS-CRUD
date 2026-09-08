@@ -27,7 +27,7 @@ public class PaymentCallbackListener {
 
     @PostConstruct
     public void init() {
-        log.info("=== PaymentCallbackListener bean created ===");
+        log.info("PaymentCallbackListener bean created");
     }
 
     @Bean

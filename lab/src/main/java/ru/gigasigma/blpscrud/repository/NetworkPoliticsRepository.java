@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface NetworkPoliticsRepository extends JpaRepository<NetworkPolitics, Long> {
-
     @Query("SELECT MAX(p.updatedAt) FROM NetworkPolitics p")
     Optional<LocalDateTime> findMaxUpdatedAt();
 }

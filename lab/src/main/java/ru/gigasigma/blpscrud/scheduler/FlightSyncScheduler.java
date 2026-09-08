@@ -8,7 +8,6 @@ import ru.gigasigma.blpscrud.service.flightSync.FlightSyncService;
 @Component
 @RequiredArgsConstructor
 public class FlightSyncScheduler {
-
     private final FlightSyncService flightSyncService;
 
     @Scheduled(fixedDelayString = "${flight.sync.fixed-delay-ms:900000}")

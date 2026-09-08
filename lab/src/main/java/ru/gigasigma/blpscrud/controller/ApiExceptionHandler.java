@@ -192,17 +192,6 @@ public class ApiExceptionHandler {
         ));
     }
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiErrorResponse.of(
-//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-//                "Internal server error",
-//                "Unexpected error occurred. Please try again later",
-//                request.getRequestURI(),
-//                List.of()
-//        ));
-//    }
-
     private ResponseEntity<ApiErrorResponse> badRequest(
             String error,
             String message,

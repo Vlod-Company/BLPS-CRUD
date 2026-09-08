@@ -4,9 +4,7 @@ import ru.gigasigma.blpscrud.security.XmlAccount;
 
 public record RegisterResponse(
         Long id,
-
         String login,
-
         String role
 ) {
     public static RegisterResponse fromAccount(XmlAccount account) {
