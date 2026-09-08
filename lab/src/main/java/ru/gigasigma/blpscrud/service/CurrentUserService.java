@@ -1,5 +1,6 @@
 package ru.gigasigma.blpscrud.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -27,7 +28,7 @@ public class CurrentUserService {
     public XmlAccount getCurrentAccount() {
         String login = getCurrentLogin();
         XmlAccount account = xmlUserStore.findByLogin(login)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found for login: " + login));
+                .orElseThrow(() -> new EntityNotFoundException("User not found for login: " + login));
         log.debug("Resolved current XML account. id={}, login={}, role={}", account.id(), account.login(), account.role());
         return account;
     }

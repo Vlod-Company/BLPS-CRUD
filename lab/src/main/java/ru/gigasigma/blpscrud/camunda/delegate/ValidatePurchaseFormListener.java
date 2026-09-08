@@ -3,12 +3,16 @@ package ru.gigasigma.blpscrud.camunda.delegate;
 import jakarta.validation.Validator;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.delegate.TaskListener;
 import org.springframework.stereotype.Component;
+import ru.gigasigma.blpscrud.camunda.PurchaseFormValidationException;
+import ru.gigasigma.blpscrud.controller.dto.response.FlightResponse;
 import ru.gigasigma.blpscrud.controller.dto.request.StartPurchaseRequest;
 import ru.gigasigma.blpscrud.enums.SeatClass;
 import ru.gigasigma.blpscrud.service.FlightService;
@@ -22,21 +26,49 @@ public class ValidatePurchaseFormListener implements TaskListener {
 
     @Override
     public void notify(DelegateTask task) {
-        switch (task.getTaskDefinitionKey()) {
-            case "Task_User_Search" -> validateSearch(task);
-            case "Task_User_Select" -> validatePurchase(task);
-            default -> throw new IllegalArgumentException("Unknown purchase form: " + task.getTaskDefinitionKey());
+        try {
+            switch (task.getTaskDefinitionKey()) {
+                case "Task_User_Search" -> validateSearch(task);
+                case "Task_User_Flight_Select" -> validateSelection(task);
+                case "Task_User_Select" -> validatePurchase(task);
+                default -> throw new IllegalArgumentException("Unknown purchase form: " + task.getTaskDefinitionKey());
+            }
+        } catch (IllegalArgumentException exception) {
+            throw new PurchaseFormValidationException(exception.getMessage(), exception);
+        }
+    }
+
+    private void validateSelection(DelegateTask task) {
+        Object decision = task.getVariable("hasSuitableFlight");
+        if (Boolean.FALSE.equals(decision) || "false".equals(decision)) {
+            task.removeVariable("flightId");
+            return;
+        }
+        if (!Boolean.TRUE.equals(decision) && !"true".equals(decision)) {
+            throw new IllegalArgumentException("Укажите, есть ли подходящий рейс.");
+        }
+        Long selected = flightId(task);
+        validateSearchResult(task, selected);
+        validateFlight(selected);
+    }
+
+    private void validateSearchResult(DelegateTask task, Long selected) {
+        Object results = task.getVariable("availableFlights");
+        if (selected == null || !(results instanceof List<?> flights)
+                || flights.stream().noneMatch(value -> value instanceof FlightResponse flight
+                        && selected.equals(flight.id()))) {
+            throw new IllegalArgumentException("Выберите рейс из результатов поиска.");
         }
     }
 
     private void validateSearch(DelegateTask task) {
+        String from = text(task, "from");
+        String to = text(task, "to");
         Long flightId = flightId(task);
-        if (flightId != null) {
+        if (flightId != null && from == null && to == null && text(task, "date") == null) {
             validateFlight(flightId);
             return;
         }
-        String from = text(task, "from");
-        String to = text(task, "to");
         if (from == null || !from.matches("[A-Z]{3}") || to == null || !to.matches("[A-Z]{3}")) {
             throw new IllegalArgumentException("Укажите ID рейса или аэропорты from/to (три заглавные латинские буквы) и дату.");
         }
@@ -76,12 +108,13 @@ public class ValidatePurchaseFormListener implements TaskListener {
             throw new IllegalArgumentException("Проверьте поля формы: " + violations.stream()
                     .map(v -> v.getPropertyPath() + ": " + v.getMessage()).sorted().collect(Collectors.joining("; ")));
         }
+        validateSearchResult(task, request.flightId());
         validateFlight(request.flightId());
     }
 
     private void validateFlight(Long id) {
         var flight = flightService.getById(id);
-        if (flight.getDepartureTime().isBefore(java.time.LocalDateTime.now())) {
+        if (flight.getDepartureTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Рейс уже вылетел. Выберите другой рейс.");
         }
         if (flight.getAvailableSeats() == null || flight.getAvailableSeats() < 1) {

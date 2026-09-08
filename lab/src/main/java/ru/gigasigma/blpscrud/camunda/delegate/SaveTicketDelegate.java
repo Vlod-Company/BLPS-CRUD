@@ -19,10 +19,14 @@ public class SaveTicketDelegate implements JavaDelegate {
     @Override
     public void execute(DelegateExecution execution) {
         Long orderId = longValue(execution, "orderId");
-        if (orderId != null) {
-            var ticket = orderService.getOrderTicket(orderId);
-            execution.setVariable("ticketId", ticket.getId());
+        if (orderId == null) {
+            throw new IllegalStateException("Cannot confirm saved ticket without an order");
         }
+        var ticket = orderService.getOrderTicket(orderId);
+        if (ticket == null || ticket.getId() == null) {
+            throw new IllegalStateException("Order has no persisted ticket: " + orderId);
+        }
+        execution.setVariable("ticketId", ticket.getId());
         execution.setVariable("ticketSaved", true);
         log.info("Camunda save ticket step completed. orderId={}", orderId);
     }

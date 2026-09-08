@@ -5,6 +5,8 @@ import static ru.gigasigma.blpscrud.camunda.CamundaVariables.localDateValue;
 import static ru.gigasigma.blpscrud.camunda.CamundaVariables.stringValue;
 
 import java.util.List;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +22,19 @@ import ru.gigasigma.blpscrud.service.FlightService;
 public class ShowFlightsDelegate implements JavaDelegate {
 
     private final FlightService flightService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void execute(DelegateExecution execution) {
+        String from = stringValue(execution, "from");
+        String to = stringValue(execution, "to");
+        var date = localDateValue(execution, "date");
         Long selectedFlightId = longValue(execution, "flightId");
-        if (selectedFlightId != null) {
+        execution.removeVariable("hasSuitableFlight");
+        if (selectedFlightId != null && from == null && to == null && date == null) {
             var flight = FlightResponse.fromEntity(flightService.getById(selectedFlightId));
             execution.setVariable("availableFlights", List.of(flight));
+            publishFormResults(execution, List.of(flight));
             execution.setVariable("availableFlightsSummary", summarize(List.of(flight)));
             execution.setVariable("hasAvailableFlights", true);
             execution.setVariable("availableFlightCount", 1);
@@ -34,11 +42,11 @@ public class ShowFlightsDelegate implements JavaDelegate {
             return;
         }
 
-        String from = stringValue(execution, "from");
-        String to = stringValue(execution, "to");
-        var date = localDateValue(execution, "date");
-
+        execution.removeVariable("flightId");
         if (from == null || to == null || date == null) {
+            execution.setVariable("availableFlights", List.of());
+            publishFormResults(execution, List.of());
+            execution.setVariable("availableFlightsSummary", "");
             execution.setVariable("hasAvailableFlights", false);
             execution.setVariable("availableFlightCount", 0);
             log.info("Camunda flight search variables are incomplete and no selected flight id is provided.");
@@ -58,6 +66,7 @@ public class ShowFlightsDelegate implements JavaDelegate {
         execution.setVariable("hasAvailableFlights", !flights.isEmpty());
         execution.setVariable("availableFlightCount", flights.size());
         execution.setVariable("availableFlights", flights);
+        publishFormResults(execution, flights);
         execution.setVariable("availableFlightsSummary", summarize(flights));
         log.info("Camunda flight search completed. from={}, to={}, count={}", from, to, flights.size());
     }
@@ -67,5 +76,13 @@ public class ShowFlightsDelegate implements JavaDelegate {
                 + " " + flight.departureAirport() + " - " + flight.arrivalAirport()
                 + " " + flight.departureTime() + ", " + flight.basePrice())
                 .collect(Collectors.joining("; "));
+    }
+
+    private void publishFormResults(DelegateExecution execution, List<FlightResponse> flights) {
+        try {
+            execution.setVariable("availableFlightsJson", objectMapper.writeValueAsString(flights));
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Cannot serialize flight search results", exception);
+        }
     }
 }

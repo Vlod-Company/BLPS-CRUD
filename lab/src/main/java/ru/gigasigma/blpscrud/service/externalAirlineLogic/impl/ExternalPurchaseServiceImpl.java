@@ -50,7 +50,13 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
 
     @Override
     public RedirectResponse generateRedirectLink(ExternalRedirectRequest request) {
-        Long userId = currentUserService.getCurrentUserId();
+        return generateRedirectLink(request, currentUserService.getCurrentUserId());
+    }
+
+    @Override
+    public RedirectResponse generateRedirectLink(ExternalRedirectRequest request, Long userId) {
+        xmlUserStore.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
         Flight flight = flightSyncService.refreshFlightForPurchase(request.flightId());
 
         String sessionId = UUID.randomUUID().toString();
@@ -63,6 +69,15 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
 
     @Override
     public WorkflowResult completeExternalBooking(ExternalBookingCallbackRequest request) {
+        return completeExternalBooking(request, true);
+    }
+
+    @Override
+    public WorkflowResult completeExternalBookingForProcess(ExternalBookingCallbackRequest request) {
+        return completeExternalBooking(request, false);
+    }
+
+    private WorkflowResult completeExternalBooking(ExternalBookingCallbackRequest request, boolean deliverTicket) {
         ExternalBookingResult result = ProgrammaticTransaction.defaultTransaction(txManager, TransactionDefinition.withDefaults(),
                 () -> {
                     XmlAccount user = xmlUserStore.findById(request.userId())
@@ -107,7 +122,9 @@ public class ExternalPurchaseServiceImpl implements ExternalPurchaseService {
 
                     flight.setAvailableSeats(flight.getAvailableSeats() - 1);
                     flightRepository.save(flight);
-                    ticketDeliveryService.sendTicket(savedOrder, savedTicket);
+                    if (deliverTicket) {
+                        ticketDeliveryService.sendTicket(savedOrder, savedTicket);
+                    }
 
                     String message = "External booking completed. externalPaymentId="
                             + request.externalPaymentId()

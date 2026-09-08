@@ -3,6 +3,10 @@ package ru.gigasigma.blpscrud.controller;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.hibernate.AssertionFailure;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
@@ -18,13 +22,21 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import ru.gigasigma.blpscrud.camunda.PurchaseFormValidationException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(ProcessEngineException.class)
+    public ResponseEntity<ApiErrorResponse> handleProcessValidation(
+            ProcessEngineException exception, HttpServletRequest request) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof PurchaseFormValidationException validation) {
+                return badRequest("Validation error", validation.getMessage(), request.getRequestURI(), List.of());
+            }
+        }
+        throw exception;
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValid(

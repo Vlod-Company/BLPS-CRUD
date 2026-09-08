@@ -8,11 +8,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.gigasigma.blpscrud.controller.dto.request.ExternalBookingCallbackRequest;
 import ru.gigasigma.blpscrud.controller.dto.request.ExternalRedirectRequest;
 import ru.gigasigma.blpscrud.controller.dto.response.RedirectResponse;
 import ru.gigasigma.blpscrud.service.FlightService;
+import ru.gigasigma.blpscrud.service.ExternalProcessCallbackService;
 import ru.gigasigma.blpscrud.service.dto.WorkflowResult;
 import ru.gigasigma.blpscrud.service.externalAirlineLogic.ExternalPurchaseService;
 import ru.gigasigma.blpscrud.util.ExternalPurchaseServiceFactory;
@@ -27,6 +29,7 @@ public class ExternalPurchaseController {
 
     private final ExternalPurchaseServiceFactory externalPurchaseServiceFactory;
     private final FlightService flightService;
+    private final ExternalProcessCallbackService processCallbacks;
 
     @PostMapping("/redirect")
     public ResponseEntity<Void> generateRedirect(@RequestBody @Valid ExternalRedirectRequest request) {
@@ -38,7 +41,11 @@ public class ExternalPurchaseController {
     }
 
     @PostMapping("/callback")
-    public WorkflowResult callback(@RequestBody @Valid ExternalBookingCallbackRequest request) {
+    public WorkflowResult callback(@RequestBody @Valid ExternalBookingCallbackRequest request,
+            @RequestParam(required = false) String session) {
+        if (session != null) {
+            return processCallbacks.complete(session, request);
+        }
         String iata = flightService.getById(request.flightId()).getAirline().getIataCode();
         ExternalPurchaseService service = externalPurchaseServiceFactory.getService(iata);
         return service.completeExternalBooking(request);

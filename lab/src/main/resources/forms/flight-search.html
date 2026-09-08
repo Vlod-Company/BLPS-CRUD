@@ -1,0 +1,51 @@
+<form name="flightSearchForm" role="form">
+  <div class="alert alert-danger" ng-if="searchError" role="alert">{{searchError}}</div>
+  <div class="form-group">
+    <label for="departure-airport">Аэропорт отправления</label>
+    <input id="departure-airport" class="form-control" cam-variable-name="from"
+           cam-variable-type="String" ng-model="departure" maxlength="3" required
+           ng-pattern="/^[A-Z]{3}$/" placeholder="LED">
+  </div>
+  <div class="form-group">
+    <label for="arrival-airport">Аэропорт прибытия</label>
+    <input id="arrival-airport" class="form-control" cam-variable-name="to"
+           cam-variable-type="String" ng-model="arrival" maxlength="3" required
+           ng-pattern="/^[A-Z]{3}$/" placeholder="SVO">
+  </div>
+  <div class="form-group">
+    <label for="departure-date">Дата вылета</label>
+    <input id="departure-date" class="form-control" cam-variable-name="date"
+           cam-variable-type="String" ng-model="departureDate" required
+           ng-pattern="/^\d{4}-\d{2}-\d{2}$/" placeholder="YYYY-MM-DD">
+  </div>
+  <script cam-script type="text/form-script">
+    function validationError() {
+      if (!/^[A-Z]{3}$/.test($scope.departure || '') || !/^[A-Z]{3}$/.test($scope.arrival || '')) {
+        return 'Укажите коды аэропортов: три заглавные латинские буквы.';
+      }
+      if ($scope.departure === $scope.arrival) {
+        return 'Аэропорты отправления и прибытия должны различаться.';
+      }
+      var value = $scope.departureDate || '';
+      var parsed = new Date(value + 'T00:00:00');
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || isNaN(parsed.getTime())
+          || parsed.getFullYear() !== Number(value.slice(0, 4))
+          || parsed.getMonth() + 1 !== Number(value.slice(5, 7))
+          || parsed.getDate() !== Number(value.slice(8, 10))) {
+        return 'Укажите существующую дату в формате YYYY-MM-DD.';
+      }
+      if (parsed < today) { return 'Дата вылета не должна быть в прошлом.'; }
+      return null;
+    }
+    $scope.$watchGroup(['departure', 'arrival', 'departureDate'], function () {
+      $scope.searchError = validationError();
+      $scope.flightSearchForm.$setValidity('searchParameters', !$scope.searchError);
+    });
+    camForm.on('submit', function (event) {
+      $scope.searchError = validationError();
+      if ($scope.searchError) { event.submitPrevented = true; }
+    });
+  </script>
+</form>
